@@ -195,8 +195,6 @@ func main() {
 
 			jsonLink, _ := json.Marshal(linkData)
 
-			fmt.Println(jsonLink)
-
 			var link = ""
 			link = encrypt.Encrypt(string(jsonLink), config.Config["Crypto"].(string))
 			link = config.Config["Click_Url"].(string) + "/click?data=" + link
@@ -214,7 +212,7 @@ func main() {
 			json, _ := json.Marshal(creative)
 
 			waitGroup.Add(1)
-			addReq(linkData, &waitGroup, mongoClient)
+			go addReq(linkData, &waitGroup, mongoClient)
 
 			w.Write(json)
 			w.WriteHeader(200)
@@ -230,7 +228,6 @@ func main() {
 
 func addReq(data LinkData, waitGroup *sync.WaitGroup, client *mongo.Client) {
 	defer waitGroup.Done()
-	fmt.Println("addReq")
 	collection := client.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
 	result, err := collection.InsertOne(context.Background(), data)
 	if err != nil {
