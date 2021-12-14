@@ -133,7 +133,7 @@ func main() {
 
 	router.Path("/ssp").Handler(ssp(&waitGroup, mongoClient))
 
-	fmt.Println("Serving requests on port 9000")
+	fmt.Println("Serving requests on port 9099")
 	err = http.ListenAndServe(":9099", router)
 	fmt.Println(err)
 }
