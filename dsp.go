@@ -1,7 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/demonoid81/dsp/events/mongodb"
+	"go.mongodb.org/mongo-driver/mongo"
+	"sync"
 	"time"
 
 	//"os"
@@ -23,7 +27,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Campany struct {
+type campany struct {
 	UID float64 `json:"uid"`
 	Cur string  `json:"cur"`
 	Cpr float64 `json:"cpr"`
@@ -35,9 +39,33 @@ type Campany struct {
 	Ccr string  `json:"ccr"`
 }
 
+type LinkData struct {
+	Key    uuid.UUID `json:"key" bson:"key"`
+	Link   string    `json:"link" bson:"link"`
+	Cpc    float64   `json:"cpc" bson:"cpc"`
+	Uid    float64   `json:"uid" bson:"uid"`
+	Cid    string    `json:"cid" bson:"cid"`
+	Cou    string    `json:"cou" bson:"cou"`
+	Bro    string    `json:"bro" bson:"bro"`
+	Os     string    `json:"os" bson:"os"`
+	Sid    string    `json:"sid" bson:"sid"`
+	Date   string    `json:"date" bson:"date"`
+	Fresh  string    `json:"fresh" bson:"fresh"`
+	FeedId string    `json:"feed_id" bson:"feed_id"`
+}
+
 func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	// Create a wait group to manage the goroutines.
+	var waitGroup sync.WaitGroup
+
+	mongoClient, err := mongodb.NewClient()
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	http.HandleFunc("/ssp", func(w http.ResponseWriter, req *http.Request) {
 
@@ -103,7 +131,7 @@ func main() {
 		var campaignsMap = []map[string]interface{}{}
 		json.Unmarshal([]byte(campaignsJson), &campaignsMap)
 
-		var Campaigns []Campany
+		var Campaigns []campany
 
 		for _, cfgCompany := range campaignsMap {
 			blacklist := []string{}
@@ -120,9 +148,13 @@ func main() {
 
 			fmt.Println(cfgCompany)
 
-			if ts.Compatible(timestamp, cfgCompany["freshness"].(string)) && inArray.FindString(blacklist, sourceId) == false && (len(whitelist) <= 0 || inArray.FindString(whitelist, sourceId) == true) && inArray.FindString(blacklistFeed, feedId) == false && (len(whitelistFeed) <= 0 || inArray.FindString(whitelistFeed, feedId) == true) {
+			if ts.Compatible(timestamp, cfgCompany["freshness"].(string)) &&
+				inArray.FindString(blacklist, sourceId) == false &&
+				(len(whitelist) <= 0 || inArray.FindString(whitelist, sourceId) == true) &&
+				inArray.FindString(blacklistFeed, feedId) == false &&
+				(len(whitelistFeed) <= 0 || inArray.FindString(whitelistFeed, feedId) == true) {
 
-				var _Campany = Campany{
+				var _Campany = campany{
 					UID: cfgCompany["user_id"].(float64),
 					Cur: cfgCompany["company_url"].(string),
 					Cpr: cfgCompany["company_price"].(float64),
@@ -148,19 +180,19 @@ func main() {
 			now := time.Now()
 			timeDate = now.Unix()
 
-			linkData := map[string]interface{}{
-				"link":    _creative.Cur,
-				"cpc":     _creative.Cpr,
-				"uid":     _creative.UID,
-				"cid":     _creative.Cid,
-				"cou":     country,
-				"bro":     browser,
-				"os":      platform,
-				"sid":     sourceId,
-				"date":    time.Unix(timeDate, 0).Format("2006-01-02"),
-				"fresh":   ts.Freshness(timestamp),
-				"feed_id": feedId,
-				"key":     uuid.NewUUID(),
+			linkData := LinkData{
+				Link:   _creative.Cur,
+				Cpc:    _creative.Cpr,
+				Uid:    _creative.UID,
+				Cid:    _creative.Cid,
+				Cou:    country,
+				Bro:    browser,
+				Os:     platform,
+				Sid:    sourceId,
+				Date:   time.Unix(timeDate, 0).Format("2006-01-02"),
+				Fresh:  ts.Freshness(timestamp),
+				FeedId: feedId,
+				Key:    uuid.New(),
 			}
 
 			jsonLink, _ := json.Marshal(linkData)
@@ -181,6 +213,9 @@ func main() {
 
 			json, _ := json.Marshal(creative)
 
+			waitGroup.Add(1)
+			go addReq(linkData, &waitGroup, mongoClient)
+
 			w.Write(json)
 			w.WriteHeader(200)
 			return
@@ -190,8 +225,14 @@ func main() {
 		}
 
 	})
+	http.ListenAndServe(":9099", nil)
+}
 
-	//http.ListenAndServe(":"+os.Getenv("PORT"), nil)
-	http.ListenAndServe(":8099", nil)
-
+func addReq(data LinkData, waitGroup *sync.WaitGroup, client *mongo.Client) {
+	defer waitGroup.Done()
+	collection := client.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
+	err, _ := collection.InsertOne(context.Background(), data)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
