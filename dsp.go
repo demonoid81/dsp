@@ -138,7 +138,7 @@ func main() {
 	fmt.Println(err)
 }
 
-func ssp(waitGroup *sync.WaitGroup, client *mongo.Client) http.HandlerFunc {
+func ssp(waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rdb := redis.Client()
 
