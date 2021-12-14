@@ -195,6 +195,8 @@ func main() {
 
 			jsonLink, _ := json.Marshal(linkData)
 
+			fmt.Println(jsonLink)
+
 			var link = ""
 			link = encrypt.Encrypt(string(jsonLink), config.Config["Crypto"].(string))
 			link = config.Config["Click_Url"].(string) + "/click?data=" + link
