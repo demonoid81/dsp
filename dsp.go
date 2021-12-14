@@ -146,8 +146,6 @@ func main() {
 			json.Unmarshal([]byte(cfgCompany["blacklist_feed"].(string)), &blacklistFeed)
 			json.Unmarshal([]byte(cfgCompany["whitelist_feed"].(string)), &whitelistFeed)
 
-			fmt.Println(cfgCompany)
-
 			if ts.Compatible(timestamp, cfgCompany["freshness"].(string)) &&
 				inArray.FindString(blacklist, sourceId) == false &&
 				(len(whitelist) <= 0 || inArray.FindString(whitelist, sourceId) == true) &&
@@ -214,7 +212,7 @@ func main() {
 			json, _ := json.Marshal(creative)
 
 			waitGroup.Add(1)
-			go addReq(linkData, &waitGroup, mongoClient)
+			addReq(linkData, &waitGroup, mongoClient)
 
 			w.Write(json)
 			w.WriteHeader(200)
