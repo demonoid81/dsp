@@ -87,6 +87,9 @@ func main() {
 
 		browser := useragent.GetBrowser(ua)
 		platform := useragent.GetPlatform(ua)
+
+		fmt.Println(dataReq)
+
 		country := dataReq["country"][0]
 		sourceId := dataReq["sid"][0]
 		category := dataReq["category"][0]
