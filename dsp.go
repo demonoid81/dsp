@@ -231,8 +231,9 @@ func main() {
 func addReq(data LinkData, waitGroup *sync.WaitGroup, client *mongo.Client) {
 	defer waitGroup.Done()
 	collection := client.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
-	err, _ := collection.InsertOne(context.Background(), data)
+	result, err := collection.InsertOne(context.Background(), data)
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println(result)
 }
