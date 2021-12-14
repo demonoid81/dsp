@@ -52,12 +52,13 @@ type LinkData struct {
 	Date   string    `json:"date" bson:"date"`
 	Fresh  string    `json:"fresh" bson:"fresh"`
 	FeedId string    `json:"feed_id" bson:"feed_id"`
+	Click  bool      `json:"-" bson:"key"`
 }
 
 func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	// Create a wait group to manage the goroutines.
+
 	var waitGroup sync.WaitGroup
 
 	mongoClient, err := mongodb.NewClient()
@@ -194,6 +195,7 @@ func main() {
 				Fresh:  ts.Freshness(timestamp),
 				FeedId: feedId,
 				Key:    uuid.New(),
+				Click:  false,
 			}
 
 			jsonLink, _ := json.Marshal(linkData)
