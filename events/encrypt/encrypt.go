@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"github.com/mergermarket/go-pkcs7"
 )
 
 func Encrypt(text string, keyEncrypt string) string {
@@ -49,4 +50,29 @@ func Decrypt(text string, keyDecrypt string) string {
 	stream.XORKeyStream(ciphertext, ciphertext)
 
 	return fmt.Sprintf("%s", ciphertext)
+}
+
+func DecryptNode(text string, key_decrypt string) string {
+	key := []byte(key_decrypt)
+	cipherText, _ := hex.DecodeString(text)
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "error"
+	}
+
+	if len(cipherText) < aes.BlockSize {
+		return "error"
+	}
+	iv := cipherText[:aes.BlockSize]
+	cipherText = cipherText[aes.BlockSize:]
+	if len(cipherText)%aes.BlockSize != 0 {
+		return "error"
+	}
+
+	mode := cipher.NewCBCDecrypter(block, iv)
+	mode.CryptBlocks(cipherText, cipherText)
+
+	cipherText, _ = pkcs7.Unpad(cipherText, aes.BlockSize)
+	return fmt.Sprintf("%s", cipherText)
 }

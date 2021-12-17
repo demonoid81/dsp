@@ -4,6 +4,7 @@ var Config = map[string]interface{}{
 	"Crypto":           "5368316e676520742879732370617371",
 	"Click_Url":        "https://api.labyrinthads.com",
 	"Media_Url":        "http://i.labyrinthads.com",
+	"Url_Redirect":     "https://labyrinthads.com",
 	"host":             "127.0.0.1",
 	"port":             5432,
 	"user":             "postgres",
@@ -13,4 +14,18 @@ var Config = map[string]interface{}{
 	"mongo_database":   "dsp",
 	"mongo_collection": "requests",
 	"mongo_url":        "mongodb://dspadmin:2XqUnHQbjGhw2pM68TkgGKe@localhost:27017",
+	"Kafka": map[string]interface{}{
+		"subscribe": map[string]interface{}{
+			"kafkaURL": "localhost:9092",
+			"topic":    "subscribeTopic",
+		},
+		"click": map[string]interface{}{
+			"kafkaURL": "localhost:9092",
+			"topic":    "clickTopic",
+		},
+		"clickdsp": map[string]interface{}{
+			"kafkaURL": "localhost:9092",
+			"topic":    "clickdspTopic",
+		},
+	},
 }

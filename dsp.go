@@ -3,12 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/demonoid81/dsp/events/kafkaMessage"
 	"github.com/demonoid81/dsp/events/mongodb"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"io/ioutil"
 	"sync"
 	"time"
 
@@ -27,7 +30,7 @@ import (
 	"github.com/demonoid81/dsp/events/postgres"
 	"github.com/demonoid81/dsp/events/redis"
 	ts "github.com/demonoid81/dsp/events/timestamp"
-	"github.com/demonoid81/dsp/events/useragent"
+	"github.com/demonoid81/dsp/events/utils"
 	"github.com/google/uuid"
 )
 
@@ -44,7 +47,7 @@ type campany struct {
 }
 
 type LinkData struct {
-	UUID   uuid.UUID `json:"uuid" bson:"uuid"`
+	Key   string `json:"uuid" bson:"uuid"`
 	Link   string    `json:"link" bson:"link"`
 	Cpc    float64   `json:"cpc" bson:"cpc"`
 	Uid    float64   `json:"uid" bson:"uid"`
@@ -56,7 +59,7 @@ type LinkData struct {
 	Date   string    `json:"date" bson:"date"`
 	Fresh  string    `json:"fresh" bson:"fresh"`
 	FeedId string    `json:"feed_id" bson:"feed_id"`
-	Click  bool      `json:"-" bson:"key"`
+	Click  bool      `json:"-" bson:"click"`
 }
 
 type responseWriter struct {
@@ -115,6 +118,8 @@ func init() {
 
 func main() {
 
+	ctx := context.Background()
+
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	var waitGroup sync.WaitGroup
@@ -131,14 +136,20 @@ func main() {
 
 	router.Path("/prometheus").Handler(promhttp.Handler())
 
-	router.Path("/ssp").Handler(ssp(&waitGroup, mongoClient))
+	router.Path("/ssp").Handler(ssp(ctx, &waitGroup, mongoClient))
+
+	router.Path("/subscribe").Handler(subscribe(ctx))
+
+	router.Path("/click").Handler(click(ctx, &waitGroup, mongoClient))
+
+	router.Path("/clickdsp").Handler(clickdsp(ctx))
 
 	fmt.Println("Serving requests on port 9099")
 	err = http.ListenAndServe(":9099", router)
 	fmt.Println(err)
 }
 
-func ssp(waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
+func ssp(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rdb := redis.Client()
 
@@ -156,8 +167,8 @@ func ssp(waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc 
 
 		ua := strings.ReplaceAll(dataReq["ua"][0], "+", " ")
 
-		browser := useragent.GetBrowser(ua)
-		platform := useragent.GetPlatform(ua)
+		browser := utils.GetBrowser(ua)
+		platform := utils.GetPlatform(ua)
 
 		country := dataReq["country"][0]
 		sourceId := dataReq["sid"][0]
@@ -261,7 +272,7 @@ func ssp(waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc 
 				Date:   time.Unix(timeDate, 0).Format("2006-01-02"),
 				Fresh:  ts.Freshness(timestamp),
 				FeedId: feedId,
-				UUID:   uuid.New(),
+				Key:   uuid.New().String(),
 				Click:  false,
 			}
 
@@ -284,7 +295,7 @@ func ssp(waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc 
 			json, _ := json.Marshal(creative)
 
 			waitGroup.Add(1)
-			go addReq(linkData, waitGroup, mongoClient)
+			go addReq(ctx, linkData, waitGroup, mongoClient)
 
 			w.Write(json)
 			w.WriteHeader(200)
@@ -296,10 +307,165 @@ func ssp(waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc 
 	}
 }
 
-func addReq(data LinkData, waitGroup *sync.WaitGroup, client *mongo.Client) {
+func subscribe(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		body, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			http.Redirect(w, r, config.Config["Url_Redirect"].(string), 301)
+		}
+
+		bodyRequest := map[string]interface{}{}
+		json.Unmarshal([]byte(body), &bodyRequest)
+
+		var timeDate int64
+		now := time.Now()
+		timeDate = now.Unix()
+
+		var subscribe = map[string]interface{}{}
+
+		subscribe["subscriber_ip"] = utils.GetIP(r)
+		subscribe["subscriber_user_agent"] = utils.GetUA(r)
+		subscribe["subscriber_country"] = utils.GetCountry(subscribe["subscriber_ip"].(string))
+		subscribe["subscriber_os"] = utils.GetOS(subscribe["subscriber_user_agent"].(string))
+		subscribe["subscriber_browser"] = utils.GetBrowser(subscribe["subscriber_user_agent"].(string))
+		subscribe["subscriber_date"] = time.Unix(timeDate, 0).Format("2006-01-02")
+		subscribe["subscriber_last_send"] = 0
+		subscribe["user_id"] = bodyRequest["user_id"]
+		subscribe["stream_id"] = bodyRequest["stream_id"]
+		subscribe["promo_id"] = bodyRequest["promo_id"]
+		subscribe["subscriber_endpoint"] = bodyRequest["endpoint"]
+		subscribe["subscriber_key"] = bodyRequest["key"]
+		subscribe["subscriber_auth"] = bodyRequest["auth"]
+
+		json, _ := json.Marshal(subscribe)
+
+		go kafkaMessage.SendMessage(ctx, string(json), config.Config["Kafka"].(map[string]interface{})["subscribe"].(map[string]interface{}))
+	}
+}
+
+func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		keys := r.URL.Query()
+		dataGet := keys.Get("data")
+
+		if dataGet != "" {
+
+			jsonData := encrypt.Decrypt(dataGet, config.Config["Crypto"].(string))
+
+			data := make(map[string]interface{})
+			json.Unmarshal([]byte(jsonData), &data)
+
+			// data["shows"] = Random.E(100, 900)
+
+			var link = data["link"].(string)
+
+			if strings.Contains(link, "{SOURCE_ID}") {
+				link = strings.Replace(link, "{SOURCE_ID}", data["sid"].(string), -1)
+			}
+			if strings.Contains(link, "{CAMPAIGN_ID}") {
+				link = strings.Replace(link, "{CAMPAIGN_ID}", data["cid"].(string), -1)
+			}
+			if strings.Contains(link, "{COST}") {
+				link = strings.Replace(link, "{COST}", fmt.Sprintf("%f", data["cpc"]), -1)
+			}
+			if strings.Contains(link, "{COUNTRY}") {
+				link = strings.Replace(link, "{COUNTRY}", data["cou"].(string), -1)
+			}
+			if strings.Contains(link, "{BROWSER}") {
+				link = strings.Replace(link, "{BROWSER}", data["bro"].(string), -1)
+			}
+			if strings.Contains(link, "{OS}") {
+				link = strings.Replace(link, "{OS}", data["os"].(string), -1)
+			}
+			_, fresh := data["fresh"]
+			if fresh {
+				if strings.Contains(link, "{FRESHNESS}") {
+					link = strings.Replace(link, "{FRESHNESS}", data["fresh"].(string), -1)
+				}
+			}
+
+			if _, feedId := data["feed_id"]; feedId {
+				if strings.Contains(link, "{FEED_ID}") {
+					link = strings.Replace(link, "{FEED_ID}", data["feed_id"].(string), -1)
+				}
+			}
+
+			data["link"] = link
+
+			jsonKafka, _ := json.Marshal(data)
+
+			if key, ok := data["uuid"]; ok {
+				waitGroup.Add(1)
+				go updateReq(ctx, key.(string), waitGroup, mongoClient)
+			}
+
+			go kafkaMessage.SendMessage(ctx, string(jsonKafka), config.Config["Kafka"].(map[string]interface{})["click"].(map[string]interface{}))
+
+			http.Redirect(w, r, data["link"].(string), 301)
+
+		} else {
+			http.Redirect(w, r, config.Config["Url_Redirect"].(string), 301)
+		}
+	}
+}
+
+func clickdsp (ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		keys := r.URL.Query()
+		dataGet := keys.Get("data")
+
+		if dataGet != "" {
+
+			jsonData := encrypt.DecryptNode(dataGet, config.Config["Crypto"].(string))
+
+			data := make(map[string]interface{})
+			json.Unmarshal([]byte(jsonData), &data)
+
+			//data["shows"] = Random.E(100, 900)
+
+			var link = data["link"].(string)
+
+			data["link"] = link
+
+			jsonKafka, _ := json.Marshal(data)
+
+			go kafkaMessage.SendMessage(ctx, string(jsonKafka), config.Config["Kafka"].(map[string]interface{})["clickdsp"].(map[string]interface{}))
+
+			http.Redirect(w, r, data["link"].(string), 301)
+
+		} else {
+			http.Redirect(w, r, config.Config["Url_Redirect"].(string), 301)
+		}
+	}
+}
+
+func addReq(ctx context.Context, data LinkData, waitGroup *sync.WaitGroup, client *mongo.Client) {
 	defer waitGroup.Done()
 	collection := client.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
-	result, err := collection.InsertOne(context.Background(), data)
+	result, err := collection.InsertOne(ctx, data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(result)
+}
+
+func updateReq(ctx context.Context, key string, waitGroup *sync.WaitGroup, client *mongo.Client) {
+	defer waitGroup.Done()
+	collection := client.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
+	filter := bson.M{
+		"uuid": bson.M{
+			"$eq": key, // check if bool field has value of 'false'
+		},
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"click": true,
+		},
+	}
+	result, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		fmt.Println(err)
 	}
