@@ -44,7 +44,7 @@ type campany struct {
 }
 
 type LinkData struct {
-	Key    uuid.UUID `json:"key" bson:"key"`
+	UUID   uuid.UUID `json:"uuid" bson:"uuid"`
 	Link   string    `json:"link" bson:"link"`
 	Cpc    float64   `json:"cpc" bson:"cpc"`
 	Uid    float64   `json:"uid" bson:"uid"`
@@ -196,7 +196,6 @@ func ssp(waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc 
 				w.WriteHeader(204)
 				return
 			}
-
 		}
 
 		conn := rdb.Get()
@@ -264,7 +263,7 @@ func ssp(waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc 
 				Date:   time.Unix(timeDate, 0).Format("2006-01-02"),
 				Fresh:  ts.Freshness(timestamp),
 				FeedId: feedId,
-				Key:    uuid.New(),
+				UUID:   uuid.New(),
 				Click:  false,
 			}
 
