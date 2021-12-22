@@ -289,6 +289,32 @@ var Config = map[string]interface{}{
 				},
 			},
 		},
+		"nimbHWu4CUtKUPP": map[string]interface{}{
+			"ssp_name": "Clickadilla_Classic",
+			"ssp_id": "121",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "102",
+					"profit": 0.00,
+					"source_id_blacklist": []string{"102108305275"},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"4uM4MVUnQtV8EPv": map[string]interface{}{
+			"ssp_name": "Clickadilla_Classic",
+			"ssp_id": "122",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "102",
+					"profit": 0.00,
+					"source_id_blacklist": []string{"102108305275"},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
 	},
 
 }
