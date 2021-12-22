@@ -146,7 +146,7 @@ func main() {
 
 	router.Path("/clickdsp").Handler(clickdsp(ctx))
 
-	//router.Path("/feed").Handler(feed(ctx, &waitGroup, mongoClient))
+	router.Path("/feed").Handler(feed(ctx, &waitGroup, mongoClient))
 
 	router.Path("/stat/{date}").Handler(stat(ctx, mongoClient))
 
