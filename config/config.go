@@ -28,6 +28,20 @@ var Config = map[string]interface{}{
 			"topic":    "clickdspTopic",
 		},
 	},
+	"DSP": map[string]interface{}{
+		"102": map[string]interface{}{
+			"dsp_name": "labyrinthads",
+			"endpoint": "http://dsp.labyrinthads.com/ssp?key=adexchange&category=1&push_type=classic",
+			"type": "mainstream",
+			"qps": 10000,
+		},
+		"103": map[string]interface{}{
+			"dsp_name": "labyrinthads",
+			"endpoint": "http://dsp.labyrinthads.com/ssp?key=adexchange&category=1&push_type=inpage",
+			"type": "mainstream",
+			"qps": 10000,
+		},
+	},
 	"SSP": map[string]interface{}{
 		"YxXs1HSVgDRRC9T": map[string]interface{}{
 			"ssp_name": "Mgid",
