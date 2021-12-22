@@ -55,5 +55,240 @@ var Config = map[string]interface{}{
 				},
 			},
 		},
+		"aeW4bHWkaGIMl6N": map[string]interface{}{
+			"ssp_name": "Clickadilla_In-Page",
+			"ssp_id": "111",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "103",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"qjHLq1RZXU3tk8j": map[string]interface{}{
+			"ssp_name": "Clickadilla_In-Page",
+			"ssp_id": "112",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "103",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"wKyozxnWWgdHECi": map[string]interface{}{
+			"ssp_name": "Clickadilla_In-Page",
+			"ssp_id": "113",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "103",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"STx9xtDhW0825P8": map[string]interface{}{
+			"ssp_name": "Clickadilla_In-Page",
+			"ssp_id": "114",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "103",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"lz5ouNvlSnlZOIf": map[string]interface{}{
+			"ssp_name": "DaoPush",
+			"ssp_id": "115",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "102",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"UvEH4RJTsa2oOpx": map[string]interface{}{
+			"ssp_name": "DaoPush_Classic",
+			"ssp_id": "116",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "102",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"NaENhvugH5WdQ1y": map[string]interface{}{
+			"ssp_name": "DaoPush_In-Page",
+			"ssp_id": "117",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "103",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"ngGnozEJ3syxUEp": map[string]interface{}{
+			"ssp_name": "DaoPush_In-Page",
+			"ssp_id": "118",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "103",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"wQdvtTF2b6fs2p2": map[string]interface{}{
+			"ssp_name": "RexRTB",
+			"ssp_id": "103",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "102",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"PJtnhleyzNYAdGk": map[string]interface{}{
+			"ssp_name": "RiverTraffic_Classic",
+			"ssp_id": "104",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "102",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"z8GBO0tCQwTw2bt": map[string]interface{}{
+			"ssp_name": "RiverTraffic_In-Page",
+			"ssp_id": "105",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "103",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"wlFmvmEl5spoPxk": map[string]interface{}{
+			"ssp_name": "RiverTraffic_In-Page",
+			"ssp_id": "106",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "103",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"FqYgmeGAJG9nJz6": map[string]interface{}{
+			"ssp_name": "Clickadilla_In-Page",
+			"ssp_id": "109",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "103",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"vv8VZtulWS5KvvC": map[string]interface{}{
+			"ssp_name": "Clickadilla_In-Page",
+			"ssp_id": "110",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "103",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"s9u1H1aJuJgYWJc": map[string]interface{}{
+			"ssp_name": "Admaven_Adult_push",
+			"ssp_id": "119",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "102",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"O29B7nMFGE6fFNv": map[string]interface{}{
+			"ssp_name": "Admaven_MNSTRM_push",
+			"ssp_id": "120",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "102",
+					"profit": 0.00,
+					"source_id_blacklist": []string{},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"uiUIGofvdGxzmA4": map[string]interface{}{
+			"ssp_name": "Clickadilla_Classic",
+			"ssp_id": "107",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "102",
+					"profit": 0.00,
+					"source_id_blacklist": []string{"102108305275"},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
+		"2S46Snsmc1IaISv": map[string]interface{}{
+			"ssp_name": "Clickadilla_Classic",
+			"ssp_id": "108",
+			"dsp": []map[string]interface{}{
+				{
+					"dsp_id": "102",
+					"profit": 0.00,
+					"source_id_blacklist": []string{"102108305275"},
+					"country_blacklist": []string{},
+					"country_whitelist": []string{},
+				},
+			},
+		},
 	},
+
 }
