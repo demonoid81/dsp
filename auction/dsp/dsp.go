@@ -98,14 +98,15 @@ func Event(ctx context.Context, data map[string]interface{}, cfg map[string]inte
 
 		if (!utils.ContainsInArray(dsp["source_id_blacklist"], data["sid"].(string)) &&
 			!utils.ContainsInArray(dsp["country_blacklist"], data["country"].(string)) &&
-			(len(reflect.ValueOf(dsp["country_whitelist"]).Interface().([]string)) == 0 || utils.ContainsInArray.E(dsp["country_whitelist"], data["country"].(string)))) &&
+			(len(reflect.ValueOf(dsp["country_whitelist"]).Interface().([]string)) == 0 || utils.ContainsInArray(dsp["country_whitelist"], data["country"].(string)))) &&
 			int(counters.Get(dsp["dsp_id"].(string))) <= (config.Config["DSP"].(map[string]interface{})[dsp["dsp_id"].(string)].(map[string]interface{})["qps"].(int)/2) {
 
 			counters.Set(dsp["dsp_id"].(string))
 			data["sid"] = data["sid"].(string)
 			data["id"] = dsp["dsp_id"].(string) + cfg["ssp_id"].(string) + data["sid"].(string)
 
-			go Affiliates[dataDsp["dsp_name"].(string)].(func(map[string]interface{}, chan map[string]interface{}, map[string]interface{}))(data, c, dataDsp)
+			go Affiliates[dataDsp["dsp_name"].(string)].
+				(func(context.Context, map[string]interface{}, chan map[string]interface{}, map[string]interface{}, *sync.WaitGroup,  *mongo.Client))(ctx, data, c, dataDsp, waitGroup, mongoClient)
 			creatives = append(creatives, <-c)
 
 		}
