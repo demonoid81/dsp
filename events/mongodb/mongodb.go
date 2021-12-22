@@ -2,6 +2,9 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
+	"sync"
 	"time"
 
 	"github.com/demonoid81/dsp/config"
@@ -17,4 +20,35 @@ func NewClient() (*mongo.Client, error) {
 		return nil, err
 	}
 	return client, nil
+}
+
+
+func AddReq(ctx context.Context, data interface{}, waitGroup *sync.WaitGroup, client *mongo.Client) {
+	defer waitGroup.Done()
+	collection := client.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
+	result, err := collection.InsertOne(ctx, data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(result)
+}
+
+func UpdateReqSetClick(ctx context.Context, key string, waitGroup *sync.WaitGroup, client *mongo.Client) {
+	defer waitGroup.Done()
+	collection := client.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
+	filter := bson.M{
+		"uuid": bson.M{
+			"$eq": key, // check if bool field has value of 'false'
+		},
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"click": true,
+		},
+	}
+	result, err := collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(result)
 }

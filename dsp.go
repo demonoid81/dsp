@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/demonoid81/dsp/events/kafkaMessage"
 	"github.com/demonoid81/dsp/events/mongodb"
+	"github.com/demonoid81/dsp/json2table"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -47,19 +48,19 @@ type campany struct {
 }
 
 type LinkData struct {
-	Key   string `json:"uuid" bson:"uuid"`
-	Link   string    `json:"link" bson:"link"`
-	Cpc    float64   `json:"cpc" bson:"cpc"`
-	Uid    float64   `json:"uid" bson:"uid"`
-	Cid    string    `json:"cid" bson:"cid"`
-	Cou    string    `json:"cou" bson:"cou"`
-	Bro    string    `json:"bro" bson:"bro"`
-	Os     string    `json:"os" bson:"os"`
-	Sid    string    `json:"sid" bson:"sid"`
-	Date   string    `json:"date" bson:"date"`
-	Fresh  string    `json:"fresh" bson:"fresh"`
-	FeedId string    `json:"feed_id" bson:"feed_id"`
-	Click  bool      `json:"-" bson:"click"`
+	Key    string  `json:"uuid" bson:"uuid"`
+	Link   string  `json:"link" bson:"link"`
+	Cpc    float64 `json:"cpc" bson:"cpc"`
+	Uid    float64 `json:"uid" bson:"uid"`
+	Cid    string  `json:"cid" bson:"cid"`
+	Cou    string  `json:"cou" bson:"cou"`
+	Bro    string  `json:"bro" bson:"bro"`
+	Os     string  `json:"os" bson:"os"`
+	Sid    string  `json:"sid" bson:"sid"`
+	Date   string  `json:"date" bson:"date"`
+	Fresh  string  `json:"fresh" bson:"fresh"`
+	FeedId string  `json:"feed_id" bson:"feed_id"`
+	Click  bool    `json:"-" bson:"click"`
 }
 
 type responseWriter struct {
@@ -144,10 +145,174 @@ func main() {
 
 	router.Path("/clickdsp").Handler(clickdsp(ctx))
 
+	//router.Path("/feed").Handler(feed(ctx, &waitGroup, mongoClient))
+
+	router.Path("/stat/{date}").Handler(stat(ctx, mongoClient))
+
 	fmt.Println("Serving requests on port 9099")
 	err = http.ListenAndServe(":9099", router)
 	fmt.Println(err)
 }
+
+func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var LinkDatas []LinkData
+		vars := mux.Vars(r)
+		collection := mongoClient.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
+		filter := bson.M{
+			"date": bson.M{
+				"$eq": vars["date"], // check if bool field has value of 'false'
+			},
+		}
+		cur, err := collection.Find(ctx, filter)
+		if err != nil {
+			w.WriteHeader(503)
+		}
+
+		for cur.Next(ctx) {
+			var t LinkData
+			err := cur.Decode(&t)
+			if err != nil {
+				w.WriteHeader(503)
+			}
+
+			LinkDatas = append(LinkDatas, t)
+		}
+
+		if err := cur.Err(); err != nil {
+			w.WriteHeader(503)
+		}
+
+		// once exhausted, close the cursor
+		cur.Close(ctx)
+
+
+		data, err := json.Marshal(LinkDatas)
+
+
+		_, html := json2table.JSON2HtmlTable(string(data), nil, nil)
+
+		w.Write([]byte(html))
+		w.WriteHeader(200)
+	}
+}
+
+//func feed(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
+//	return func(w http.ResponseWriter, r *http.Request) {
+//
+//		w.Header().Set("Content-Type", "application/json")
+//
+//		ssp := r.FormValue("key")
+//		cfg, err := config.Config["SSP"].(map[string]interface{})[ssp]
+//
+//		if !err {
+//			w.WriteHeader(http.StatusServiceUnavailable)
+//			return
+//		}
+//
+//		country := utils.GetCountry(r.FormValue("ip"))
+//		//country := string(ctx.FormValue("country"))
+//
+//		data := map[string]interface{}{
+//			"ip":      string(ctx.FormValue("ip")),
+//			"ua":      string(ctx.FormValue("ua")),
+//			"id":      "",
+//			"sid":     string(ctx.FormValue("id")),
+//			"time":    string(ctx.FormValue("time")),
+//			"uid":     string(ctx.FormValue("uid")),
+//			"lang":    string(ctx.FormValue("lang")),
+//			"tz":      string(ctx.FormValue("tz")),
+//			"country": country,
+//		}
+//
+//		creative, dataBase64 := dsp.Event(data, ssp, cfg.(map[string]interface{}))
+//
+//		if fmt.Sprint(creative["status"]) == "200" {
+//
+//			w.Header().Set("Token", dataBase64)
+//
+//			result := map[string]interface{}{}
+//			resultMultiple := []map[string]interface{}{}
+//
+//			linkData := map[string]interface{}{
+//				"link":     creative["link"],
+//				"cpc":      creative["cpc"],
+//				"cpc_orig": creative["cpc_original"],
+//				"dsp_id":   creative["dsp_id"],
+//				"dsp_name": creative["dsp_name"],
+//				"ssp_id":   creative["ssp_id"],
+//				"ssp_name": creative["ssp_name"],
+//				"ip":       r.FormValue("ip"),
+//				"country":  country,
+//				"clid":     rand.Intn(999999999-9999999) + 9999999,
+//				"id":       r.FormValue("id"),
+//				"uid":      r.FormValue("uid"),
+//			}
+//
+//			jsonLink, _ := json.Marshal(linkData)
+//
+//			var link = ""
+//			link = encrypt.Encrypt(string(jsonLink), config.Config["Crypto"].(string))
+//			link = config.Config["Click_Url"].(string) + "?data=" + link
+//
+//			if (fmt.Sprint(creative["ssp_name"]) == "clickadu") {
+//				cpc, _ := strconv.ParseFloat(fmt.Sprintf("%.4f", creative["cpc"]), 8)
+//				result = map[string]interface{}{
+//					"title":       creative["title"],
+//					"description": creative["body"],
+//					"price":       cpc,
+//					"image":       creative["image"],
+//					"icon":        creative["icon"],
+//					"url":         link,
+//				}
+//			} else if (fmt.Sprint(creative["ssp_name"]) == "adskeeper") {
+//				cpc, _ := strconv.ParseFloat(fmt.Sprintf("%.4f", creative["cpc"]), 8)
+//				res := map[string]interface{}{
+//					"text":        creative["body"],
+//					"title":       creative["title"],
+//					"cpc":         cpc,
+//					"click_url":   link,
+//					"image_url":   creative["image"],
+//					"icon_url":    creative["icon"],
+//					"campaign_id": creative["ssp_id"],
+//					"category":    "1",
+//					"id":          creative["id"],
+//				}
+//				resultMultiple = append(resultMultiple, res)
+//			} else {
+//				cpc, _ := strconv.ParseFloat(fmt.Sprintf("%.4f", creative["cpc"]), 8)
+//				result = map[string]interface{}{
+//					"id":          creative["id"],
+//					"title":       creative["title"],
+//					"description": creative["body"],
+//					"icon":        creative["icon"],
+//					"image":       creative["image"],
+//					"url":         link,
+//					"bid":         cpc,
+//				}
+//			}
+//
+//			if len(resultMultiple) > 0 {
+//				res, err := json.Marshal(resultMultiple)
+//				if err != nil {
+//					ctx.SetStatusCode(204)
+//				}
+//				ctx.Write(res)
+//				ctx.SetStatusCode(200)
+//			} else {
+//				res, err := json.Marshal(result)
+//				if err != nil {
+//					ctx.SetStatusCode(204)
+//				}
+//				ctx.Write(res)
+//				ctx.SetStatusCode(200)
+//			}
+//
+//		} else {
+//			ctx.SetStatusCode(204)
+//		}
+//	}
+//}
 
 func ssp(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -210,7 +375,7 @@ func ssp(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Clie
 		conn := rdb.Get()
 		conn.Close()
 
-		var campaignsMap = []map[string]interface{}{}
+		var campaignsMap []map[string]interface{}
 		json.Unmarshal([]byte(campaignsJson), &campaignsMap)
 
 		var Campaigns []campany
@@ -272,11 +437,13 @@ func ssp(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Clie
 				Date:   time.Unix(timeDate, 0).Format("2006-01-02"),
 				Fresh:  ts.Freshness(timestamp),
 				FeedId: feedId,
-				Key:   uuid.New().String(),
+				Key:    uuid.New().String(),
 				Click:  false,
 			}
 
 			jsonLink, _ := json.Marshal(linkData)
+
+			fmt.Println(jsonLink)
 
 			var link = ""
 			link = encrypt.Encrypt(string(jsonLink), config.Config["Crypto"].(string))
@@ -412,7 +579,7 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 	}
 }
 
-func clickdsp (ctx context.Context) http.HandlerFunc {
+func clickdsp(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		keys := r.URL.Query()
 		dataGet := keys.Get("data")

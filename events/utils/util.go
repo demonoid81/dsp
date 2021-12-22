@@ -2,10 +2,11 @@ package utils
 
 import (
 	"github.com/mileusna/useragent"
+	"github.com/oschwald/geoip2-golang"
 	"net"
 	"net/http"
+	"reflect"
 	"strings"
-	"github.com/oschwald/geoip2-golang"
 )
 
 func GetPlatform(useragent string) string {
@@ -58,4 +59,20 @@ func GetCountry(ip string) string {
 func GetOS(useragent string) string {
 	ua := ua.Parse(useragent)
 	return ua.OS
+}
+
+func ContainsInArray(t interface {}, str string) bool {
+
+	switch reflect.TypeOf(t).Kind() {
+	case reflect.Slice:
+		s := reflect.ValueOf(t)
+
+		for i := 0; i < s.Len(); i++ {
+			if s.Index(i).Interface().(string) == str {
+				return true
+			}
+		}
+	}
+
+	return false
 }
