@@ -160,14 +160,15 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 		startDate := r.FormValue("start")
 		//endDate := r.FormValue("end")
 
-		type stat struct {
-			shows int64 `json:"shows"`
-			click int64 `json:"click"`
-			rate float64 `json:"rate"`
-			cpc float64 `json:"cpc"`
-			ctr float64 `json:"ctr"`
-
+		type status struct {
+			Shows int64 `json:"shows"`
+			Click int64 `json:"click"`
+			Rate float64 `json:"rate"`
+			CPC float64 `json:"cpc"`
+			CTR float64 `json:"ctr"`
 		}
+
+		var statuses []status
 
 		collection := mongoClient.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
 		filter := bson.M{
@@ -195,7 +196,9 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 			click: clicks,
 		}
 
-		data, err := json.Marshal(curStat)
+		statuses = append(statuses, curStat)
+
+		data, err := json.Marshal(statuses)
 
 		fmt.Println(data)
 
