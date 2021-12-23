@@ -148,7 +148,7 @@ func main() {
 
 	router.Path("/feed").Handler(feed(ctx, &waitGroup, mongoClient))
 
-	router.Path("/stat/").Handler(stat(ctx, mongoClient))
+	router.Path("/stat").Handler(stat(ctx, mongoClient))
 
 	fmt.Println("Serving requests on port 9099")
 	err = http.ListenAndServe(":9099", router)
