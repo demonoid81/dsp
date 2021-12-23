@@ -178,11 +178,14 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 		}
 
 		days := endDate.Sub(startDate).Hours() / 24
+		fmt.Println(days)
 		var statuses []status
 		collection := mongoClient.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
-		for i:= 0; i <= int(days); i++ {
+		for i := 0; i <= int(days); i++ {
 
 			date := startDate.Add(time.Hour * 24 * time.Duration(i)).Format("2020-01-29")
+
+			fmt.Println(date)
 
 			filter := bson.M{
 				"date": bson.M{
@@ -205,7 +208,7 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 			}
 
 			curStat := status{
-				Date: date,
+				Date:  date,
 				Shows: shows,
 				Click: clicks,
 			}
