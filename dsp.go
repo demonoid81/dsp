@@ -157,13 +157,13 @@ func main() {
 
 func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		startDate, err := time.Parse("2020-01-29", r.FormValue("start"))
+		startDate, err := time.Parse("2006-01-02", r.FormValue("start"))
 		if err != nil {
 			fmt.Println(err)
 			w.WriteHeader(503)
 			return
 		}
-		endDate, err := time.Parse("2020-01-29", r.FormValue("end"))
+		endDate, err := time.Parse("2006-01-02", r.FormValue("end"))
 		if err != nil {
 			fmt.Println(err)
 			w.WriteHeader(503)
