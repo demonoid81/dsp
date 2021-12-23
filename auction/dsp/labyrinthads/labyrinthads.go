@@ -63,6 +63,8 @@ func Get(ctx context.Context, data map[string]interface{}, c chan map[string]int
 
 	rdb := redis.Client()
 
+	fmt.Println(data)
+
 	country := data["country"].(string)
 	sourceId := data["id"].(string)
 	category := "1"
