@@ -197,6 +197,8 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 
 		data, err := json.Marshal(curStat)
 
+		fmt.Println(data)
+
 		_, html := json2table.JSON2HtmlTable(string(data), nil, nil)
 
 		w.Write([]byte(html))
