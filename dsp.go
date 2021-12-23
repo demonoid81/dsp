@@ -158,7 +158,7 @@ func main() {
 func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		startDate := r.FormValue("start")
-		endDate := r.FormValue("end")
+		//endDate := r.FormValue("end")
 
 		type stat struct {
 			shows int64 `json:"shows"`
@@ -190,13 +190,10 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 			w.WriteHeader(503)
 		}
 
-
-
 		curStat := stat{
 			shows: shows,
 			click: clicks,
 		}
-
 
 		data, err := json.Marshal(curStat)
 
