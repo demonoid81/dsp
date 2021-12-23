@@ -70,7 +70,7 @@ func Get(ctx context.Context, data map[string]interface{}, c chan map[string]int
 	category := "1"
 	timestamp := data["time"].(string)
 	pushType := "classic"
-	feedId := data["ssp_id"].(string)
+	feedId := Config["ssp_id"].(string)
 
 	ua := strings.ReplaceAll(data["ua"].(string), "+", " ")
 	browser := utils.GetBrowser(ua)
