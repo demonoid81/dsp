@@ -185,7 +185,7 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 		collection := mongoClient.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
 		for i := 0; i <= int(days); i++ {
 
-			date := startDate.Add(time.Hour * 24 * time.Duration(i)).Format("2020-01-29")
+			date := startDate.Add(time.Hour * 24 * time.Duration(i)).Format("2006-01-02")
 
 			fmt.Println(date)
 
