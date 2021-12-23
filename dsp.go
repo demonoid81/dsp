@@ -148,7 +148,7 @@ func main() {
 
 	router.Path("/feed").Handler(feed(ctx, &waitGroup, mongoClient))
 
-	router.Path("/stat/{date}").Handler(stat(ctx, mongoClient))
+	router.Path("/stat/").Handler(stat(ctx, mongoClient))
 
 	fmt.Println("Serving requests on port 9099")
 	err = http.ListenAndServe(":9099", router)
@@ -157,39 +157,48 @@ func main() {
 
 func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var LinkDatas []LinkData
-		vars := mux.Vars(r)
+		startDate := r.FormValue("start")
+		endDate := r.FormValue("end")
+
+		type stat struct {
+			shows int64 `json:"shows"`
+			click int64 `json:"click"`
+			rate float64 `json:"rate"`
+			cpc float64 `json:"cpc"`
+			ctr float64 `json:"ctr"`
+
+		}
+
 		collection := mongoClient.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
 		filter := bson.M{
 			"date": bson.M{
-				"$eq": vars["date"], // check if bool field has value of 'false'
+				"$eq": startDate, // check if bool field has value of 'false'
 			},
 		}
-		cur, err := collection.Find(ctx, filter)
+		shows, err := collection.CountDocuments(ctx, filter)
 		if err != nil {
 			w.WriteHeader(503)
 		}
 
-		for cur.Next(ctx) {
-			var t LinkData
-			err := cur.Decode(&t)
-			if err != nil {
-				w.WriteHeader(503)
-			}
-
-			LinkDatas = append(LinkDatas, t)
+		filter = bson.M{
+			"date": bson.M{"$eq": startDate},
+			"click": bson.M{"$eq": true},
 		}
 
-		if err := cur.Err(); err != nil {
+		clicks, err := collection.CountDocuments(ctx, filter)
+		if err != nil {
 			w.WriteHeader(503)
 		}
 
-		// once exhausted, close the cursor
-		cur.Close(ctx)
 
 
-		data, err := json.Marshal(LinkDatas)
+		curStat := stat{
+			shows: shows,
+			click: clicks,
+		}
 
+
+		data, err := json.Marshal(curStat)
 
 		_, html := json2table.JSON2HtmlTable(string(data), nil, nil)
 
