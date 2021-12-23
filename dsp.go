@@ -191,9 +191,9 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 			w.WriteHeader(503)
 		}
 
-		curStat := stat{
-			shows: shows,
-			click: clicks,
+		curStat := status{
+			Shows: shows,
+			Click: clicks,
 		}
 
 		statuses = append(statuses, curStat)
