@@ -157,46 +157,61 @@ func main() {
 
 func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		startDate := r.FormValue("start")
-		//endDate := r.FormValue("end")
+		startDate, err := time.Parse("2020-01-29", r.FormValue("start"))
+		if err != nil {
+			w.WriteHeader(503)
+			return
+		}
+		endDate, err := time.Parse("2020-01-29", r.FormValue("end"))
+		if err != nil {
+			w.WriteHeader(503)
+			return
+		}
 
 		type status struct {
-			Shows int64 `json:"shows"`
-			Click int64 `json:"click"`
-			Rate float64 `json:"rate"`
-			CPC float64 `json:"cpc"`
-			CTR float64 `json:"ctr"`
+			Date  string  `json:"date"`
+			Shows int64   `json:"shows"`
+			Click int64   `json:"click"`
+			Rate  float64 `json:"rate"`
+			CPC   float64 `json:"cpc"`
+			CTR   float64 `json:"ctr"`
 		}
 
+		days := endDate.Sub(startDate).Hours() / 24
 		var statuses []status
-
 		collection := mongoClient.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
-		filter := bson.M{
-			"date": bson.M{
-				"$eq": startDate, // check if bool field has value of 'false'
-			},
-		}
-		shows, err := collection.CountDocuments(ctx, filter)
-		if err != nil {
-			w.WriteHeader(503)
-		}
+		for i:= 0; i <= int(days); i++ {
 
-		filter = bson.M{
-			"date": bson.M{"$eq": startDate},
-			"click": bson.M{"$eq": true},
-		}
+			date := startDate.Add(time.Hour * 24 * time.Duration(i)).Format("2020-01-29")
 
-		clicks, err := collection.CountDocuments(ctx, filter)
-		if err != nil {
-			w.WriteHeader(503)
-		}
+			filter := bson.M{
+				"date": bson.M{
+					"$eq": date, // check if bool field has value of 'false'
+				},
+			}
+			shows, err := collection.CountDocuments(ctx, filter)
+			if err != nil {
+				w.WriteHeader(503)
+			}
 
-		curStat := status{
-			Shows: shows,
-			Click: clicks,
-		}
+			filter = bson.M{
+				"date":  bson.M{"$eq": date},
+				"click": bson.M{"$eq": true},
+			}
 
-		statuses = append(statuses, curStat)
+			clicks, err := collection.CountDocuments(ctx, filter)
+			if err != nil {
+				w.WriteHeader(503)
+			}
+
+			curStat := status{
+				Date: date,
+				Shows: shows,
+				Click: clicks,
+			}
+
+			statuses = append(statuses, curStat)
+		}
 
 		data, err := json.Marshal(statuses)
 
