@@ -68,7 +68,7 @@ func Get(ctx context.Context, data map[string]interface{}, c chan map[string]int
 	country := data["country"].(string)
 	sourceId := data["id"].(string)
 	category := "1"
-	timestamp := data["timestamp"].(string)
+	timestamp := data["time"].(string)
 	pushType := "classic"
 	feedId := data["feed_id"].(string)
 
