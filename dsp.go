@@ -285,7 +285,7 @@ func feed(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cli
 
 			var link = ""
 			link = encrypt.Encrypt(string(jsonLink), config.Config["Crypto"].(string))
-			link = config.Config["Click_Url"].(string) + "?data=" + link
+			link = config.Config["Click_Url"].(string) + "/click?data=" + link
 
 			if fmt.Sprint(creative["ssp_name"]) == "clickadu" {
 				cpc, _ := strconv.ParseFloat(fmt.Sprintf("%.4f", creative["cpc"]), 8)
