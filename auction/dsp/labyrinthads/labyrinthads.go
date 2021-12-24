@@ -3,7 +3,6 @@ package labyrinthads
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/demonoid81/dsp/config"
 	"github.com/demonoid81/dsp/events/encrypt"
 	"github.com/demonoid81/dsp/events/inArray"
@@ -185,8 +184,6 @@ func Get(ctx context.Context, data map[string]interface{}, c chan map[string]int
 		}
 
 		jsonLink, _ := json.Marshal(linkData)
-
-		fmt.Println(jsonLink)
 
 		var link = ""
 		link = encrypt.Encrypt(string(jsonLink), config.Config["Crypto"].(string))

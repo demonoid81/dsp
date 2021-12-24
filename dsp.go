@@ -548,6 +548,8 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 		keys := r.URL.Query()
 		dataGet := keys.Get("data")
 
+		fmt.Println(dataGet)
+
 		if dataGet != "" {
 
 			jsonData := encrypt.Decrypt(dataGet, config.Config["Crypto"].(string))
