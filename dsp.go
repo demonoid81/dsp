@@ -170,6 +170,10 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 			return
 		}
 
+		feedID := r.FormValue("feed_id")
+
+
+
 		type status struct {
 			Date  string  `json:"date"`
 			Shows int64   `json:"shows"`
@@ -189,11 +193,21 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 
 			fmt.Println(date)
 
-			filter := bson.M{
-				"date": bson.M{
-					"$eq": date, // check if bool field has value of 'false'
-				},
+
+
+
+				filter := bson.M{
+					"date": bson.M{
+						"$eq": date, // check if bool field has value of 'false'
+					},
+				}
+			if feedID != "" {
+				filter = bson.M{
+					"date": bson.M{"$eq": date},
+					"feed_id": bson.M{"$eq": feedID},
+				}
 			}
+
 			shows, err := collection.CountDocuments(ctx, filter)
 			if err != nil {
 				w.WriteHeader(503)
@@ -202,6 +216,13 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 			filter = bson.M{
 				"date":  bson.M{"$eq": date},
 				"click": bson.M{"$eq": true},
+			}
+			if feedID != "" {
+				filter = bson.M{
+					"date":  bson.M{"$eq": date},
+					"click": bson.M{"$eq": true},
+					"feed_id": bson.M{"$eq": feedID},
+				}
 			}
 
 			clicks, err := collection.CountDocuments(ctx, filter)
