@@ -80,7 +80,7 @@ export default {
   },
   mounted() {
     axios
-        .get('http://localhost:9099/ssp/get')
+        .get(window.location.origin + '/ssp/get')
         .then(response => (this.data = response.data))
   }
 }
