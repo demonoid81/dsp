@@ -11,6 +11,7 @@ require (
 	github.com/mileusna/useragent v1.0.2
 	github.com/oschwald/geoip2-golang v1.5.0
 	github.com/prometheus/client_golang v1.11.0
+	github.com/rs/cors v1.8.2
 	github.com/segmentio/kafka-go v0.4.25
 	go.mongodb.org/mongo-driver v1.8.1
 )

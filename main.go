@@ -34,7 +34,13 @@ import (
 	ts "github.com/demonoid81/dsp/events/timestamp"
 	"github.com/demonoid81/dsp/events/utils"
 	"github.com/google/uuid"
+	"github.com/rs/cors"
 )
+
+type app struct {
+	SPP         map[string]SSP
+	mongoClient *mongo.Client
+}
 
 type campany struct {
 	UID float64 `json:"uid"`
@@ -68,6 +74,8 @@ type responseWriter struct {
 	http.ResponseWriter
 	statusCode int
 }
+
+var App *app
 
 func NewResponseWriter(w http.ResponseWriter) *responseWriter {
 	return &responseWriter{w, http.StatusOK}
@@ -116,6 +124,7 @@ func init() {
 	prometheus.Register(totalRequests)
 	prometheus.Register(responseStatus)
 	prometheus.Register(httpDuration)
+	App = &app{}
 }
 
 func main() {
@@ -128,6 +137,14 @@ func main() {
 
 	mongoClient, err := mongodb.NewClient()
 
+	App.mongoClient = mongoClient
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = App.loadSSP(ctx)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -135,6 +152,8 @@ func main() {
 
 	router := mux.NewRouter()
 	router.Use(prometheusMiddleware)
+
+
 
 	router.Path("/prometheus").Handler(promhttp.Handler())
 
@@ -150,8 +169,20 @@ func main() {
 
 	router.Path("/stat").Handler(stat(ctx, mongoClient))
 
+	router.Path("/ssp/get").Handler(App.getSSP(ctx))
+	router.Path("/ssp/add").Handler(addSSP(ctx, mongoClient))
+	router.Path("/ssp/update").Handler(stat(ctx, mongoClient))
+	router.Path("/ssp/refresh").Handler(stat(ctx, mongoClient))
+
+
+	ui := UIHandler{staticFS: staticFiles, staticPath: "web/dist", indexPath: "index.html"}
+	router.PathPrefix("/").Handler(ui)
+
+
+	corsHandler := cors.Default().Handler(router)
+
 	fmt.Println("Serving requests on port 9099")
-	err = http.ListenAndServe(":9099", router)
+	err = http.ListenAndServe(":9099", corsHandler)
 	fmt.Println(err)
 }
 
@@ -172,8 +203,6 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 
 		feedID := r.FormValue("feed_id")
 
-
-
 		type status struct {
 			Date  string  `json:"date"`
 			Shows int64   `json:"shows"`
@@ -193,17 +222,14 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 
 			fmt.Println(date)
 
-
-
-
-				filter := bson.M{
-					"date": bson.M{
-						"$eq": date, // check if bool field has value of 'false'
-					},
-				}
+			filter := bson.M{
+				"date": bson.M{
+					"$eq": date, // check if bool field has value of 'false'
+				},
+			}
 			if feedID != "" {
 				filter = bson.M{
-					"date": bson.M{"$eq": date},
+					"date":    bson.M{"$eq": date},
 					"feed_id": bson.M{"$eq": feedID},
 				}
 			}
@@ -219,8 +245,8 @@ func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
 			}
 			if feedID != "" {
 				filter = bson.M{
-					"date":  bson.M{"$eq": date},
-					"click": bson.M{"$eq": true},
+					"date":    bson.M{"$eq": date},
+					"click":   bson.M{"$eq": true},
 					"feed_id": bson.M{"$eq": feedID},
 				}
 			}
