@@ -10,21 +10,23 @@ import (
 	"net/http"
 )
 
-type DSP struct {
+
+
+type DSPCfg struct {
 	DSPID             string   `json:"dsp_id"`
 	Profit            float64  `json:"profit"`
 	SourceIdBlacklist []string `json:"source_id_blacklist"`
 	CountryBlacklist  []string `json:"country_blacklist"`
 	CountryWhitelist  []string `json:"country_whitelist"`
-	Type string `json:"type"`
+	Type              string   `json:"type"`
 }
 
 type SSP struct {
-	Key   string `json:"key"`
-	Name  string `json:"ssp_name"`
-	SSPID string `json:"ssp_id"`
-	DSP   DSP    `json:"dsp"`
-	Type string `json:"type"`
+	Key   string   `json:"key"`
+	Name  string   `json:"ssp_name"`
+	SSPID string   `json:"ssp_id"`
+	DSP   []DSPCfg `json:"dsp"`
+	Type  string   `json:"type"`
 }
 
 func (app *app) loadSSP(ctx context.Context) error {
@@ -57,43 +59,45 @@ func (app *app) loadSSP(ctx context.Context) error {
 
 func (app *app) getSSP(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-	var ssp []SSP
+		var ssp []SSP
 
-	collection := app.mongoClient.Database(config.Config["mongo_database"].(string)).Collection("ssp")
-	cur, err := collection.Find(ctx, bson.D{{}})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer cur.Close(ctx)
+		collection := app.mongoClient.Database(config.Config["mongo_database"].(string)).Collection("ssp")
+		cur, err := collection.Find(ctx, bson.D{{}})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer cur.Close(ctx)
 
-	for cur.Next(ctx) {
-		//Create a value into which the single document can be decoded
-		var elem SSP
-		err := cur.Decode(&elem)
+		for cur.Next(ctx) {
+			//Create a value into which the single document can be decoded
+			var elem SSP
+			err := cur.Decode(&elem)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			ssp = append(ssp, elem)
+
+		}
+		if err := cur.Err(); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Printf("Found multiple documents: %+v\n", ssp)
+		res, err := json.Marshal(ssp)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		ssp = append(ssp, elem)
-
-	}
-	if err := cur.Err(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	fmt.Printf("Found multiple documents: %+v\n", ssp)
-	res, err := json.Marshal(ssp)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(res)
-	w.WriteHeader(http.StatusOK)
+		w.Write(res)
+		w.WriteHeader(http.StatusOK)
 	}
 }
+
+
 
 func addSSP(ctx context.Context, client *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

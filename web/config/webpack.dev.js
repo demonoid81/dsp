@@ -23,6 +23,11 @@ module.exports = merge(common, {
         compress: true,
         hot: true,
         port: 8080,
+        proxy: {
+            '/ssp': {
+                target: 'http://localhost:9099',
+            },
+        }
     },
 
     plugins: [

@@ -170,10 +170,12 @@ func main() {
 	router.Path("/stat").Handler(stat(ctx, mongoClient))
 
 	router.Path("/ssp/get").Handler(App.getSSP(ctx))
+
 	router.Path("/ssp/add").Handler(addSSP(ctx, mongoClient))
 	router.Path("/ssp/update").Handler(stat(ctx, mongoClient))
 	router.Path("/ssp/refresh").Handler(stat(ctx, mongoClient))
 
+	router.Path("/dsp/get").Handler(App.getDSP(ctx))
 
 	ui := UIHandler{staticFS: staticFiles, staticPath: "web/dist", indexPath: "index.html"}
 	router.PathPrefix("/").Handler(ui)
