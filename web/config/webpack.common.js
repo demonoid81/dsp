@@ -35,7 +35,7 @@ module.exports = {
         new VueLoaderPlugin(),
 
         // Removes/cleans build folders and unused assets when rebuilding
-        new CleanWebpackPlugin(),
+        // new CleanWebpackPlugin(),
 
         // Copies files from target to destination folder
         new CopyWebpackPlugin({

@@ -1,34 +1,15 @@
 <template>
   <div>
-    <ModalSSP :countries="countries" :read-only="readOnly" :item="sspItem" :view="viewSSPModal"/>
-    <Modal v-model="viewDSPModal" width="700">
-      <p slot="header" style="text-align:center">
-        <span>DSP info</span>
-      </p>
-      <Form :model="dspItem" :label-width="100" label-position="left">
-        <FormItem label="ID:" prop="id">
-          <Input v-model="dspItem.id" placeholder="Enter ssp id..." :disabled="readOnly"></Input>
-        </FormItem>
-        <FormItem label="Key:" prop="name">
-          <Input v-model="dspItem.name" placeholder="Enter ssp key..." :disabled="readOnly"></Input>
-        </FormItem>
-        <FormItem label="Name:" prop="endpoint">
-          <Input v-model="dspItem.endpoint" placeholder="Enter ssp name..." :disabled="readOnly"></Input>
-        </FormItem>
-        <FormItem label="Type:" prop="type">
-          <Input v-model="dspItem.name" placeholder="Enter ssp name..." :disabled="readOnly"></Input>
-        </FormItem>
-        <FormItem label="Type:" prop="qps">
-          <Input v-model="dspItem.qps" placeholder="Enter ssp name..." :disabled="readOnly"></Input>
-        </FormItem>
-      </Form>
-      <div slot="footer">
-        <Button type="primary" @click="viewSSPModal=false">Close</Button>
-      </div>
-    </Modal>
+    <ModalSSP :ssp="sspItem" :read-only="readOnly" :show="viewSSPModal" @close="viewSSPModal = false" @addDSS="addDSP"/>
+    <ModalDSP :dsp="dspItem"
+              :read-only="readOnly"
+              :show="viewDSPModal"
+              @close="viewDSPModal = false"
+              @save="saveDSP"
+    />
     <Row :gutter="16" style="padding: 10px">
       <Col span="6">
-        <Button type="primary" @click="viewSSPModal=true" >Add DSP</Button>
+        <Button type="primary" @click="addDSPShow" >Add DSP</Button>
       </Col>
       <Col span="6">
         <Button type="primary" @click="viewSSPModal=true">Add SSP</Button>
@@ -62,9 +43,10 @@
 import axios from 'axios';
 
 import ModalSSP from "./ModalSSP";
+import ModalDSP from "./ModalDSP";
 
 export default {
-  components: {ModalSSP},
+  components: {ModalDSP, ModalSSP},
   data() {
     return {
 
@@ -137,6 +119,25 @@ export default {
     }
   },
   methods: {
+    addDSPShow() {
+      this.viewDSPModal = true
+      this.readOnly=  false
+    },
+    saveDSP() {
+      axios.post(window.location.origin + '/dsp/add',  this.dspItem)
+          .catch(error => {
+            console.error("There was an error!", error);
+          });
+    },
+    addDSP () {
+      if (this.sspItem.hasOwnProperty('dss')) {
+        this.sspItem = {
+          ...this.sspItem,
+          dsp: this.sspItem.dsp.push({})}
+        return
+      }
+      this.sspItem = {...this.sspItem, dsp: [{}]}
+    },
     show (index) {
       this.sspItem = {
         id:this.data[index].ssp_id,
@@ -160,6 +161,10 @@ export default {
           type: item.type
         }
       });
+    },
+    dspData: function () {
+      return []
+
     }
   },
   mounted() {

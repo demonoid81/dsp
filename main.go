@@ -6,7 +6,6 @@ import (
 	"github.com/demonoid81/dsp/auction/dsp"
 	"github.com/demonoid81/dsp/events/kafkaMessage"
 	"github.com/demonoid81/dsp/events/mongodb"
-	"github.com/demonoid81/dsp/json2table"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -167,15 +166,17 @@ func main() {
 
 	router.Path("/feed").Handler(feed(ctx, &waitGroup, mongoClient))
 
-	router.Path("/stat").Handler(stat(ctx, mongoClient))
+	router.Path("/stat").Handler(App.stat(ctx))
 
 	router.Path("/ssp/get").Handler(App.getSSP(ctx))
 
 	router.Path("/ssp/add").Handler(addSSP(ctx, mongoClient))
-	router.Path("/ssp/update").Handler(stat(ctx, mongoClient))
-	router.Path("/ssp/refresh").Handler(stat(ctx, mongoClient))
+	router.Path("/ssp/update").Handler(addSSP(ctx, mongoClient))
+	router.Path("/ssp/reload").Handler(reload(ctx, mongoClient))
 
 	router.Path("/dsp/get").Handler(App.getDSP(ctx))
+	router.Path("/dsp/add").Methods("POST").Handler(App.addDSP(ctx))
+	router.Path("/dsp/update").Methods("POST").Handler(App.updateDSP(ctx))
 
 	ui := UIHandler{staticFS: staticFiles, staticPath: "web/dist", indexPath: "index.html"}
 	router.PathPrefix("/").Handler(ui)
@@ -188,95 +189,7 @@ func main() {
 	fmt.Println(err)
 }
 
-func stat(ctx context.Context, mongoClient *mongo.Client) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		startDate, err := time.Parse("2006-01-02", r.FormValue("start"))
-		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(503)
-			return
-		}
-		endDate, err := time.Parse("2006-01-02", r.FormValue("end"))
-		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(503)
-			return
-		}
 
-		feedID := r.FormValue("feed_id")
-
-		type status struct {
-			Date  string  `json:"date"`
-			Shows int64   `json:"shows"`
-			Click int64   `json:"click"`
-			Rate  float64 `json:"rate"`
-			CPC   float64 `json:"cpc"`
-			CTR   float64 `json:"ctr"`
-		}
-
-		days := endDate.Sub(startDate).Hours() / 24
-		fmt.Println(days)
-		var statuses []status
-		collection := mongoClient.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
-		for i := 0; i <= int(days); i++ {
-
-			date := startDate.Add(time.Hour * 24 * time.Duration(i)).Format("2006-01-02")
-
-			fmt.Println(date)
-
-			filter := bson.M{
-				"date": bson.M{
-					"$eq": date, // check if bool field has value of 'false'
-				},
-			}
-			if feedID != "" {
-				filter = bson.M{
-					"date":    bson.M{"$eq": date},
-					"feed_id": bson.M{"$eq": feedID},
-				}
-			}
-
-			shows, err := collection.CountDocuments(ctx, filter)
-			if err != nil {
-				w.WriteHeader(503)
-			}
-
-			filter = bson.M{
-				"date":  bson.M{"$eq": date},
-				"click": bson.M{"$eq": true},
-			}
-			if feedID != "" {
-				filter = bson.M{
-					"date":    bson.M{"$eq": date},
-					"click":   bson.M{"$eq": true},
-					"feed_id": bson.M{"$eq": feedID},
-				}
-			}
-
-			clicks, err := collection.CountDocuments(ctx, filter)
-			if err != nil {
-				w.WriteHeader(503)
-			}
-
-			curStat := status{
-				Date:  date,
-				Shows: shows,
-				Click: clicks,
-			}
-
-			statuses = append(statuses, curStat)
-		}
-
-		data, err := json.Marshal(statuses)
-
-		fmt.Println(data)
-
-		_, html := json2table.JSON2HtmlTable(string(data), nil, nil)
-
-		w.Write([]byte(html))
-		w.WriteHeader(200)
-	}
-}
 
 func feed(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

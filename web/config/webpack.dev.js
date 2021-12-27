@@ -27,6 +27,9 @@ module.exports = merge(common, {
             '/ssp': {
                 target: 'http://localhost:9099',
             },
+            '/dsp': {
+                target: 'http://localhost:9099',
+            },
         }
     },
 

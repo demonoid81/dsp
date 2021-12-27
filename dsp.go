@@ -10,7 +10,7 @@ import (
 )
 
 type DSP struct {
-	ID       int64  `json:"id"`
+	ID       string `json:"id"`
 	Name     string `json:"name"`
 	Endpoint string `json:"endpoint"`
 	Type     string `json:"type"`
@@ -62,6 +62,7 @@ func (app *app) addDSP(ctx context.Context) http.HandlerFunc {
 		var dsp DSP
 		err := json.NewDecoder(r.Body).Decode(&dsp)
 		if err != nil {
+			fmt.Println(err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -77,3 +78,23 @@ func (app *app) addDSP(ctx context.Context) http.HandlerFunc {
 	}
 }
 
+func (app *app) updateDSP(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var dsp DSP
+		err := json.NewDecoder(r.Body).Decode(&dsp)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		fmt.Println(dsp)
+		collection := app.mongoClient.Database(config.Config["mongo_database"].(string)).Collection("dsp")
+
+		result, err := collection.InsertOne(ctx, dsp)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		fmt.Println(result)
+		w.WriteHeader(http.StatusOK)
+	}
+}

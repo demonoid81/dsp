@@ -118,3 +118,9 @@ func addSSP(ctx context.Context, client *mongo.Client) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 	}
 }
+
+func reload(ctx context.Context, client *mongo.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}
+}
