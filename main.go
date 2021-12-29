@@ -38,7 +38,7 @@ import (
 )
 
 type app struct {
-	SSP         map[string]dsp.SSP
+	SSP         []dsp.SSP
 	mongoClient *mongo.Client
 }
 
@@ -144,6 +144,12 @@ func main() {
 		return
 	}
 
+	//err = App.uploadSSP(ctx)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+
 	err = App.loadSSP(ctx)
 	if err != nil {
 		fmt.Println(err)
@@ -186,6 +192,23 @@ func main() {
 	err = http.ListenAndServe(":9099", corsHandler)
 	fmt.Println(err)
 }
+
+//func (app *app) uploadSSP(ctx context.Context) error {
+//	collection := app.mongoClient.Database(config.Config["mongo_database"].(string)).Collection("ssp")
+//	for _, ssp := range ssp.SSPData {
+//		result, err := collection.InsertOne(ctx, ssp)
+//		if err != nil {
+//			fmt.Println(err)
+//		}
+//		fmt.Println(result)
+//	}
+//	return nil
+//}
+
+func (app *app)sspFeed(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
+	return ssp.Feed(ctx, app.SSP, waitGroup, mongoClient)
+}
+
 
 func sspEvent(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
