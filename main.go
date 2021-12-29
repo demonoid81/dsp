@@ -177,7 +177,7 @@ func main() {
 
 	router.Path("/ssp/add").Handler(addSSP(ctx, mongoClient))
 	router.Path("/ssp/update").Handler(addSSP(ctx, mongoClient))
-	router.Path("/ssp/reload").Handler(reload(ctx, mongoClient))
+	router.Path("/ssp/reload").Handler(App.reloadSSP(ctx))
 
 	router.Path("/dsp/get").Handler(App.getDSP(ctx))
 	router.Path("/dsp/add").Methods("POST").Handler(App.addDSP(ctx))
@@ -209,6 +209,15 @@ func (app *app)sspFeed(ctx context.Context, waitGroup *sync.WaitGroup, mongoClie
 	return ssp.Feed(ctx, app.SSP, waitGroup, mongoClient)
 }
 
+func (app *app)reloadSSP(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := app.loadSSP(ctx)
+		if err != nil {
+			w.WriteHeader(503)
+			return
+		}
+	}
+}
 
 func sspEvent(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

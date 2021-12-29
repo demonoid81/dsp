@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="overflow-y: auto;">
     <ModalSSP :ssp="sspItem" :read-only="readOnly" :show="viewSSPModal" @close="viewSSPModal = false" @addDSS="addDSP"/>
     <ModalDSP :dsp="dspItem"
               :read-only="readOnly"
@@ -156,6 +156,7 @@ export default {
     tableSSPData : function () {
       console.log(this.data)
       return this.ssp.map(item => {
+        console.log(item)
         return {
           id: item.ssp_id,
           key: item.key,
