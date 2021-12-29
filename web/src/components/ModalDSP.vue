@@ -10,10 +10,10 @@
       <FormItem label="ID:" prop="id">
         <Input v-model="dsp.id"  placeholder="Enter ssp id..." :disabled="readOnly" @input="$emit('update:dsp.id', $event)"></Input>
       </FormItem>
-      <FormItem label="Key:" prop="name">
-        <Input v-model="dsp.name" placeholder="Enter ssp key..." :disabled="readOnly" @input="$emit('update:dsp.id', $event)"></Input>
+      <FormItem label="Name:" prop="name">
+        <Input v-model="dsp.name" placeholder="Enter ssp key..." :disabled="readOnly" @input="$emit('update:dsp.name', $event)"></Input>
       </FormItem>
-      <FormItem label="Name:" prop="endpoint">
+      <FormItem label="Endpoint:" prop="endpoint">
         <Input v-model="dsp.endpoint" placeholder="Enter ssp name..." :disabled="readOnly" @input="$emit('update:dsp.endpoint', $event)"></Input>
       </FormItem>
       <FormItem label="Type:" prop="type">

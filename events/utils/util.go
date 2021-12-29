@@ -76,3 +76,16 @@ func ContainsInArray(t interface {}, str string) bool {
 
 	return false
 }
+
+
+func Find(slice interface{}, f func(value interface{}) bool) int {
+	s := reflect.ValueOf(slice)
+	if s.Kind() == reflect.Slice {
+		for index := 0; index < s.Len(); index++ {
+			if f(s.Index(index).Interface()) {
+				return index
+			}
+		}
+	}
+	return -1
+}

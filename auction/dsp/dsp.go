@@ -5,11 +5,17 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/demonoid81/dsp/auction/dsp/labyrinthads"
 	"github.com/demonoid81/dsp/config"
+	"github.com/demonoid81/dsp/events/encrypt"
+	"github.com/demonoid81/dsp/events/inArray"
+	"github.com/demonoid81/dsp/events/mongodb"
+	"github.com/demonoid81/dsp/events/postgres"
+	"github.com/demonoid81/dsp/events/redis"
+	ts "github.com/demonoid81/dsp/events/timestamp"
 	"github.com/demonoid81/dsp/events/utils"
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/mongo"
-	"reflect"
+	"math/rand"
 	"sort"
 	"strconv"
 	"strings"
@@ -17,20 +23,72 @@ import (
 	"time"
 )
 
-var Affiliates = map[string]interface{}{
-	"labyrinthads":  labyrinthads.Get,
+type DSPCfg struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Endpoint string `json:"endpoint"`
+	Type     string `json:"type"`
+	QPS      int64  `json:"qps"`
+}
+
+var DSPData = []DSPCfg{{
+	ID:       102,
+	Name:     "labyrinthads",
+	Endpoint: "http://dsp.labyrinthads.com/ssp?key=adexchange&category=1&push_type=classic",
+	Type:     "mainstream",
+	QPS:      10000,
+}, {
+	ID:       103,
+	Name:     "labyrinthads",
+	Endpoint: "http://dsp.labyrinthads.com/ssp?key=adexchange&category=1&push_type=inpage",
+	Type:     "mainstream",
+	QPS:      10000,
+},
+}
+
+type ReqData struct {
+	IP      string
+	UA      string
+	ID      string
+	SID     string
+	Time    string
+	UID     string
+	Lang    string
+	TZ      string
+	Country string
+}
+
+type Creative struct {
+	Body        string  `json:"body"`
+	Cpc         float64 `json:"cpc"`
+	CpcOriginal float64 `json:"cpc_original"`
+	Icon        string  `json:"icon"`
+	ID          string  `json:"id"`
+	Image       string  `json:"image"`
+	Link        string  `json:"link"`
+	Status      int     `json:"status"`
+	Title       string  `json:"title"`
+	DSPID       int     `json:"dsp_id"`
+	DSPName     string  `json:"dsp_name"`
+	SSPID       int     `json:"ssp_id"`
+	SSPName     string  `json:"ssp_name"`
+	Timestamp   int     `json:"timestamp"`
+}
+
+var Affiliates = map[string]func(ctx context.Context, data ReqData, config DataDSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) Creative{
+	"labyrinthads": Get,
 }
 
 type single struct {
 	mu     sync.Mutex
-	values map[string]string
+	values map[int]string
 }
 
 var counters = single{
-	values: make(map[string]string),
+	values: make(map[int]string),
 }
 
-func (s *single) Get(key string) int64 {
+func (s *single) Get(key int) int64 {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	var count int64
@@ -52,7 +110,7 @@ func (s *single) Get(key string) int64 {
 	return count
 }
 
-func (s *single) Set(key string) {
+func (s *single) Set(key int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	vals := strings.Split(s.values[key], "_")
@@ -63,109 +121,288 @@ func (s *single) Set(key string) {
 	s.values[key] = strconv.FormatInt(timestamp, 10) + "_" + strconv.FormatInt(count, 10)
 }
 
-type Creatives []struct {
-	Body        string  `json:"body"`
-	Cpc         float64 `json:"cpc"`
-	CpcOriginal float64 `json:"cpc_original"`
-	Icon        string  `json:"icon"`
-	ID          string  `json:"id"`
-	Image       string  `json:"image"`
-	Link        string  `json:"link"`
-	Status      int     `json:"status"`
-	Title       string  `json:"title"`
-	DspId       string  `json:"dsp_id"`
-	DspName     string  `json:"dsp_name"`
-	SspId       string  `json:"ssp_id"`
-	SspName     string  `json:"ssp_name"`
-	Timestamp   int     `json:"timestamp"`
+
+var Creatives []Creative
+
+type DSP struct {
+	ID                int `json:"id"`
+	Profit            float64
+	SourceIdBlacklist []string `json:"source_id_blacklist"`
+	CountryBlacklist  []string `json:"country_blacklist"`
+	CountryWhitelist  []string `json:"country_whitelist"`
 }
 
-func Event(ctx context.Context, data map[string]interface{}, cfg map[string]interface{}, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) (map[string]interface{}, string) {
+type SSP struct {
+	Key  string `json:"key"`
+	Name string `json:"ssp_name"`
+	ID   int    `json:"ssp_id"`
+	DSP  []DSP  `json:"dsp"`
+	Type string `json:"type"`
+}
 
-	c := make(chan map[string]interface{})
-	var creatives []map[string]interface{}
-	result := Creatives{}
+type DataDSP struct {
+	DSPID    int
+	DSPName  string
+	Profit   float64
+	Endpoint string
+	SSPID    int
+	SSPName  string
+}
 
-	for _, dsp := range cfg["dsp"].([]map[string]interface{}) {
-		var dataDsp = map[string]interface{}{
-			"dsp_id":   dsp["dsp_id"],
-			"dsp_name": config.Config["DSP"].(map[string]interface{})[dsp["dsp_id"].(string)].(map[string]interface{})["dsp_name"],
-			"profit":   dsp["profit"],
-			"endpoint": config.Config["DSP"].(map[string]interface{})[dsp["dsp_id"].(string)].(map[string]interface{})["endpoint"],
-			"ssp_id":   cfg["ssp_id"],
-			"ssp_name": cfg["ssp_name"],
+type campany struct {
+	UID float64 `json:"uid"`
+	Cur string  `json:"cur"`
+	Cpr float64 `json:"cpr"`
+	Cid string  `json:"cid"`
+	Atl string  `json:"atl"`
+	Atx string  `json:"atx"`
+	Aic string  `json:"aic"`
+	Aig string  `json:"aig"`
+	Ccr string  `json:"ccr"`
+}
+
+type LinkData struct {
+	Key    string  `json:"uuid" bson:"uuid"`
+	Link   string  `json:"link" bson:"link"`
+	Cpc    float64 `json:"cpc" bson:"cpc"`
+	Uid    float64 `json:"uid" bson:"uid"`
+	Cid    string  `json:"cid" bson:"cid"`
+	Cou    string  `json:"cou" bson:"cou"`
+	Bro    string  `json:"bro" bson:"bro"`
+	Os     string  `json:"os" bson:"os"`
+	Sid    string  `json:"sid" bson:"sid"`
+	Date   string  `json:"date" bson:"date"`
+	Fresh  string  `json:"fresh" bson:"fresh"`
+	FeedId string  `json:"feed_id" bson:"feed_id"`
+	Click  bool    `json:"-" bson:"click"`
+}
+
+func Event(ctx context.Context, data ReqData, sspData SSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) (*Creative, string, error) {
+
+	var creatives []Creative
+
+	for _, dsp := range sspData.DSP {
+		idx := utils.Find(DSPData, func(value interface{}) bool {
+			return value.(DSPCfg).ID == dsp.ID
+		})
+
+		if idx < 0 {
+			return nil, "", fmt.Errorf("dsp not found")
 		}
 
-		if (!utils.ContainsInArray(dsp["source_id_blacklist"], data["sid"].(string)) &&
-			!utils.ContainsInArray(dsp["country_blacklist"], data["country"].(string)) &&
-			(len(reflect.ValueOf(dsp["country_whitelist"]).Interface().([]string)) == 0 || utils.ContainsInArray(dsp["country_whitelist"], data["country"].(string)))) &&
-			int(counters.Get(dsp["dsp_id"].(string))) <= (config.Config["DSP"].(map[string]interface{})[dsp["dsp_id"].(string)].(map[string]interface{})["qps"].(int)/2) {
+		var cfg = DataDSP{
+			DSPID:    dsp.ID,
+			DSPName:  DSPData[idx].Name,
+			Profit:   dsp.Profit,
+			Endpoint: DSPData[idx].Endpoint,
+			SSPID:    sspData.ID,
+			SSPName:  sspData.Name,
+		}
 
-			counters.Set(dsp["dsp_id"].(string))
-			data["sid"] = data["sid"].(string)
-			data["id"] = dsp["dsp_id"].(string) + cfg["ssp_id"].(string) + data["sid"].(string)
+		if (!utils.ContainsInArray(dsp.SourceIdBlacklist, data.SID) &&
+			!utils.ContainsInArray(dsp.CountryBlacklist, data.Country) &&
+			(len(dsp.CountryWhitelist) == 0 || utils.ContainsInArray(dsp.CountryWhitelist, data.Country))) &&
+			counters.Get(dsp.ID) <= DSPData[idx].QPS/2 {
 
-			go Affiliates[dataDsp["dsp_name"].(string)].
-				(func(context.Context, map[string]interface{}, chan map[string]interface{}, map[string]interface{}, *sync.WaitGroup,  *mongo.Client))(ctx, data, c, dataDsp, waitGroup, mongoClient)
-			creatives = append(creatives, <-c)
+			counters.Set(dsp.ID)
+			data.ID = string(dsp.ID) + string(sspData.ID) + data.SID
 
+			res := Affiliates[DSPData[idx].Name](ctx, data, cfg, waitGroup, mongoClient)
+			creatives = append(creatives, res)
 		}
 	}
 
-	close(c)
-
-	res, err := json.Marshal(creatives)
-	if err != nil {
-		return map[string]interface{}{
-			"status": 204,
-		}, ""
-	}
-
-	json.Unmarshal(res, &result)
-
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Cpc > result[j].Cpc
+	sort.Slice(creatives, func(i, j int) bool {
+		return creatives[i].Cpc > creatives[j].Cpc
 	})
 
-	var creative []map[string]interface{}
-	inrec, _ := json.Marshal(result)
-	json.Unmarshal(inrec, &creative)
+	returnCreative := Creative{}
 
-	returnCreative := map[string]interface{}{}
-
-	if len(creative) > 0 {
-		returnCreative = creative[0]
+	if len(creatives) > 0 {
+		returnCreative = creatives[0]
 	}
 
 	var headerCreatives []map[string]interface{}
 
-	for index, crKafka := range creative {
+	for index, crKafka := range creatives {
 		cr_ := map[string]interface{}{
-			"status": crKafka["status"],
-			"d_id":   crKafka["dsp_id"],
+			"status": crKafka.Status,
+			"d_id":   crKafka.DSPID,
 		}
-		if fmt.Sprint(crKafka["status"]) == "200" {
+		if crKafka.Status == 200 {
 			if index == 0 {
 				cr_["w"] = 1
-				cr_["cpc"] = crKafka["cpc_original"]
+				cr_["cpc"] = crKafka.CpcOriginal
 			}
 		}
 		headerCreatives = append(headerCreatives, cr_)
 	}
 
-	/*header_data := map[string]interface{}{
-	      "ssp_id": ssp_key,
-	      "sub_id": data["sid"],
-	      "country": data["country"],
-	      "data": header_creatives,
-	  }
-
-	  json_header, _ := json.Marshal(header_data)
-	*/
 	jsonHeader, _ := json.Marshal(headerCreatives)
 	base64Header := base64.StdEncoding.EncodeToString(jsonHeader)
 
-	return returnCreative, base64Header
+	return &returnCreative, base64Header, nil
 
 }
 
+func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) Creative {
+
+	rdb := redis.Client()
+
+	country := data.Country
+	sourceId := data.ID
+	category := "1"
+	timestamp := data.Time
+	pushType := "classic"
+	feedId := cfg.SSPID
+
+	ua := strings.ReplaceAll(data.UA, "+", " ")
+	browser := utils.GetBrowser(ua)
+	platform := utils.GetPlatform(ua)
+
+	var redisKey = browser + "-" + platform + "-" + country + "-" + category + "-" + pushType + "-" + string(feedId)
+
+	var campaignsJson string
+
+	redisCampaigns := redis.Get(rdb, redisKey)
+
+	if redisCampaigns != "error" {
+
+		campaignsJson = redisCampaigns
+
+	} else {
+
+		postgresCampaigns := postgres.E(country, platform, browser, category, pushType)
+
+		if postgresCampaigns != "error" {
+
+			campaignsJson = postgresCampaigns
+
+			set := redis.Set(rdb, redisKey, campaignsJson)
+
+			if set == "error" {
+				return Creative{
+					Status:  204,
+					DSPID:   cfg.DSPID,
+					DSPName: cfg.DSPName,
+					SSPID:   cfg.SSPID,
+					SSPName: cfg.SSPName,
+				}
+			}
+
+		} else {
+			return Creative{
+				Status:  204,
+				DSPID:   cfg.DSPID,
+				DSPName: cfg.DSPName,
+				SSPID:   cfg.SSPID,
+				SSPName: cfg.SSPName,
+			}
+		}
+	}
+
+	conn := rdb.Get()
+	conn.Close()
+
+	var campaignsMap []map[string]interface{}
+	json.Unmarshal([]byte(campaignsJson), &campaignsMap)
+
+	var Campaigns []campany
+
+	for _, cfgCompany := range campaignsMap {
+		blacklist := []string{}
+		whitelist := []string{}
+
+		blacklistFeed := []string{}
+		whitelistFeed := []string{}
+
+		json.Unmarshal([]byte(cfgCompany["blacklist"].(string)), &blacklist)
+		json.Unmarshal([]byte(cfgCompany["whitelist"].(string)), &whitelist)
+
+		json.Unmarshal([]byte(cfgCompany["blacklist_feed"].(string)), &blacklistFeed)
+		json.Unmarshal([]byte(cfgCompany["whitelist_feed"].(string)), &whitelistFeed)
+
+		if ts.Compatible(timestamp, cfgCompany["freshness"].(string)) &&
+			inArray.FindString(blacklist, sourceId) == false &&
+			(len(whitelist) <= 0 || inArray.FindString(whitelist, sourceId) == true) &&
+			inArray.FindString(blacklistFeed, string(feedId)) == false &&
+			(len(whitelistFeed) <= 0 || inArray.FindString(whitelistFeed, string(feedId)) == true) {
+
+			var _Campany = campany{
+				UID: cfgCompany["user_id"].(float64),
+				Cur: cfgCompany["company_url"].(string),
+				Cpr: cfgCompany["company_price"].(float64),
+				Cid: strconv.FormatFloat(cfgCompany["company_id"].(float64), 'f', -1, 64),
+				Atl: cfgCompany["ad_title"].(string),
+				Atx: cfgCompany["ad_text"].(string),
+				Aic: cfgCompany["ad_icon"].(string),
+				Aig: cfgCompany["ad_image"].(string),
+				Ccr: cfgCompany["company_country"].(string),
+			}
+			Campaigns = append(Campaigns, _Campany)
+
+		}
+	}
+
+	if len(Campaigns) > 0 {
+
+		rand.Seed(time.Now().Unix())
+		n := rand.Int() % len(Campaigns)
+		_creative := Campaigns[n]
+
+		var timeDate int64
+		now := time.Now()
+		timeDate = now.Unix()
+
+		linkData := LinkData{
+			Link:   _creative.Cur,
+			Cpc:    _creative.Cpr,
+			Uid:    _creative.UID,
+			Cid:    _creative.Cid,
+			Cou:    country,
+			Bro:    browser,
+			Os:     platform,
+			Sid:    sourceId,
+			Date:   time.Unix(timeDate, 0).Format("2006-01-02"),
+			Fresh:  ts.Freshness(timestamp),
+			FeedId: string(feedId),
+			Key:    uuid.New().String(),
+			Click:  false,
+		}
+
+		jsonLink, _ := json.Marshal(linkData)
+
+		var link = ""
+		link = encrypt.Encrypt(string(jsonLink), config.Config["Crypto"].(string))
+		link = config.Config["Click_Url"].(string) + "/click?data=" + link
+
+		waitGroup.Add(1)
+		go mongodb.AddReq(ctx, linkData, waitGroup, mongoClient)
+
+		cpc := _creative.Cpr - (_creative.Cpr * config.Config["revshare"].(float64) / 100)
+
+		return Creative{
+			Status:      200,
+			ID:          _creative.Cid,
+			Title:       _creative.Atl,
+			Body:        _creative.Atx,
+			Icon:        config.Config["Media_Url"].(string) + "/" + _creative.Aic,
+			Image:       config.Config["Media_Url"].(string) + "/" + _creative.Aig,
+			Link:        link,
+			Cpc:         cpc - (cpc * cfg.Profit / 100),
+			CpcOriginal: cpc,
+			DSPID:       cfg.DSPID,
+			DSPName:     cfg.DSPName,
+			SSPID:       cfg.SSPID,
+			SSPName:     cfg.SSPName,
+		}
+	} else {
+		return Creative{
+			Status:  499,
+			DSPID:   cfg.DSPID,
+			DSPName: cfg.DSPName,
+			SSPID:   cfg.SSPID,
+			SSPName: cfg.SSPName,
+		}
+	}
+}

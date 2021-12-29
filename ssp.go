@@ -4,33 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/demonoid81/dsp/auction/dsp"
 	"github.com/demonoid81/dsp/config"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 )
 
-
-
-type DSPCfg struct {
-	DSPID             string   `json:"dsp_id"`
-	Profit            float64  `json:"profit"`
-	SourceIdBlacklist []string `json:"source_id_blacklist"`
-	CountryBlacklist  []string `json:"country_blacklist"`
-	CountryWhitelist  []string `json:"country_whitelist"`
-	Type              string   `json:"type"`
-}
-
-type SSP struct {
-	Key   string   `json:"key"`
-	Name  string   `json:"ssp_name"`
-	SSPID string   `json:"ssp_id"`
-	DSP   []DSPCfg `json:"dsp"`
-	Type  string   `json:"type"`
-}
-
 func (app *app) loadSSP(ctx context.Context) error {
-	var ssp []SSP
+	var ssp []dsp.SSP
 
 	collection := app.mongoClient.Database(config.Config["mongo_database"].(string)).Collection("ssp")
 	cur, err := collection.Find(ctx, bson.D{{}})
@@ -41,7 +23,7 @@ func (app *app) loadSSP(ctx context.Context) error {
 
 	for cur.Next(ctx) {
 		//Create a value into which the single document can be decoded
-		var elem SSP
+		var elem dsp.SSP
 		err := cur.Decode(&elem)
 		if err != nil {
 			return err
@@ -59,7 +41,7 @@ func (app *app) loadSSP(ctx context.Context) error {
 
 func (app *app) getSSP(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var ssp []SSP
+		var ssp []dsp.SSP
 
 		collection := app.mongoClient.Database(config.Config["mongo_database"].(string)).Collection("ssp")
 		cur, err := collection.Find(ctx, bson.D{{}})
@@ -71,7 +53,7 @@ func (app *app) getSSP(ctx context.Context) http.HandlerFunc {
 
 		for cur.Next(ctx) {
 			//Create a value into which the single document can be decoded
-			var elem SSP
+			var elem dsp.SSP
 			err := cur.Decode(&elem)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -97,11 +79,9 @@ func (app *app) getSSP(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-
-
 func addSSP(ctx context.Context, client *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var ssp SSP
+		var ssp dsp.SSP
 		err := json.NewDecoder(r.Body).Decode(&ssp)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

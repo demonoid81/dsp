@@ -13,6 +13,9 @@ type config struct {
 type pg struct {
 }
 
+
+
+
 var Config = map[string]interface{}{
 	"Crypto":           "5368316e676520742879732370617371",
 	"Click_Url":        "https://api.labyrinthads.com",

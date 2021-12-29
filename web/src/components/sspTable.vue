@@ -17,7 +17,7 @@
     </Row>
     <div>
       <p style="padding:10px;">SSP</p>
-      <Table :columns="columnsSSP" :data="tableSSPData" border>
+      <Table :columns="columnsSSP" :data="tableSSPData" border no-data-text="No data">
         <template slot="action" slot-scope="{ row, index }">
           <Button size="small" style="margin-right: 5px" type="primary" @click="show(index)">View</Button>
           <Button size="small" type="error" @click="remove(index)">Delete</Button>
@@ -26,7 +26,7 @@
     </div>
     <div>
       <p style="padding:10px;">DSP</p>
-      <Table :columns="columnsDSP" :data="dspData" border>
+      <Table :columns="columnsDSP" :data="dsp" border no-data-text="No data">
         <template slot="action" slot-scope="{ row, index }">
           <Button size="small" style="margin-right: 5px" type="primary" @click="show(index)">View</Button>
           <Button size="small" type="error" @click="remove(index)">Delete</Button>
@@ -115,7 +115,8 @@ export default {
           align: 'center'
         }
       ],
-      data: []
+      ssp: [],
+      dsp:[]
     }
   },
   methods: {
@@ -125,6 +126,7 @@ export default {
     },
     saveDSP() {
       axios.post(window.location.origin + '/dsp/add',  this.dspItem)
+          .then()
           .catch(error => {
             console.error("There was an error!", error);
           });
@@ -140,11 +142,11 @@ export default {
     },
     show (index) {
       this.sspItem = {
-        id:this.data[index].ssp_id,
-        key:this.data[index].key,
-        name:this.data[index].ssp_name,
-        type:this.data[index].type,
-        dsp: this.data[index].dsp
+        id:this.ssp[index].ssp_id,
+        key:this.ssp[index].key,
+        name:this.ssp[index].ssp_name,
+        type:this.ssp[index].type,
+        dsp: this.ssp[index].dsp
       }
       this.readOnly = true
       this.viewSSPModal = true
@@ -153,7 +155,7 @@ export default {
   computed: {
     tableSSPData : function () {
       console.log(this.data)
-      return this.data.map(item => {
+      return this.ssp.map(item => {
         return {
           id: item.ssp_id,
           key: item.key,
@@ -170,7 +172,11 @@ export default {
   mounted() {
     axios
         .get(window.location.origin + '/ssp/get')
-        .then(response => (this.data = response.data))
+        .then(response => (this.ssp = response.data))
+
+    axios
+        .get(window.location.origin + '/dsp/get')
+        .then(response => (this.dsp = response.data))
   }
 }
 </script>

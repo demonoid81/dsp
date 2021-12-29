@@ -4,22 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/demonoid81/dsp/auction/dsp"
 	"github.com/demonoid81/dsp/config"
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 )
 
-type DSP struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Endpoint string `json:"endpoint"`
-	Type     string `json:"type"`
-	QPS      int    `json:"qps"`
-}
+
 
 func (app *app) getDSP(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var ssp []DSP
+		var elements []dsp.DSPCfg
 
 		collection := app.mongoClient.Database(config.Config["mongo_database"].(string)).Collection("dsp")
 		cur, err := collection.Find(ctx, bson.D{{}})
@@ -31,22 +26,22 @@ func (app *app) getDSP(ctx context.Context) http.HandlerFunc {
 
 		for cur.Next(ctx) {
 			//Create a value into which the single document can be decoded
-			var elem DSP
+			var elem dsp.DSPCfg
 			err := cur.Decode(&elem)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
-			ssp = append(ssp, elem)
+			elements = append(elements, elem)
 
 		}
 		if err := cur.Err(); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Printf("Found multiple documents: %+v\n", ssp)
-		res, err := json.Marshal(ssp)
+		fmt.Printf("Found multiple documents: %+v\n", elements)
+		res, err := json.Marshal(elements)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -59,7 +54,7 @@ func (app *app) getDSP(ctx context.Context) http.HandlerFunc {
 
 func (app *app) addDSP(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var dsp DSP
+		var dsp dsp.DSPCfg
 		err := json.NewDecoder(r.Body).Decode(&dsp)
 		if err != nil {
 			fmt.Println(err)
@@ -80,7 +75,7 @@ func (app *app) addDSP(ctx context.Context) http.HandlerFunc {
 
 func (app *app) updateDSP(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var dsp DSP
+		var dsp dsp.DSPCfg
 		err := json.NewDecoder(r.Body).Decode(&dsp)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

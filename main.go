@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/demonoid81/dsp/auction/dsp"
+	"github.com/demonoid81/dsp/auction/ssp"
 	"github.com/demonoid81/dsp/events/kafkaMessage"
 	"github.com/demonoid81/dsp/events/mongodb"
 	"github.com/gorilla/mux"
@@ -37,7 +38,7 @@ import (
 )
 
 type app struct {
-	SPP         map[string]SSP
+	SSP         map[string]dsp.SSP
 	mongoClient *mongo.Client
 }
 
@@ -152,11 +153,9 @@ func main() {
 	router := mux.NewRouter()
 	router.Use(prometheusMiddleware)
 
-
-
 	router.Path("/prometheus").Handler(promhttp.Handler())
 
-	router.Path("/ssp").Handler(ssp(ctx, &waitGroup, mongoClient))
+	router.Path("/ssp").Handler(sspEvent(ctx, &waitGroup, mongoClient))
 
 	router.Path("/subscribe").Handler(subscribe(ctx))
 
@@ -164,7 +163,7 @@ func main() {
 
 	router.Path("/clickdsp").Handler(clickdsp(ctx))
 
-	router.Path("/feed").Handler(feed(ctx, &waitGroup, mongoClient))
+	router.Path("/feed").Handler(ssp.Feed(ctx, &waitGroup, mongoClient))
 
 	router.Path("/stat").Handler(App.stat(ctx))
 
@@ -181,7 +180,6 @@ func main() {
 	ui := UIHandler{staticFS: staticFiles, staticPath: "web/dist", indexPath: "index.html"}
 	router.PathPrefix("/").Handler(ui)
 
-
 	corsHandler := cors.Default().Handler(router)
 
 	fmt.Println("Serving requests on port 9099")
@@ -189,126 +187,7 @@ func main() {
 	fmt.Println(err)
 }
 
-
-
-func feed(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		w.Header().Set("Content-Type", "application/json")
-
-		ssp := r.FormValue("key")
-		cfg, err := config.Config["SSP"].(map[string]interface{})[ssp]
-
-		if !err {
-			w.WriteHeader(http.StatusServiceUnavailable)
-			return
-		}
-
-		country := utils.GetCountry(r.FormValue("ip"))
-		//country := string(ctx.FormValue("country"))
-
-		data := map[string]interface{}{
-			"ip":      r.FormValue("ip"),
-			"ua":      r.FormValue("ua"),
-			"id":      "",
-			"sid":     r.FormValue("id"),
-			"time":    r.FormValue("time"),
-			"uid":     r.FormValue("uid"),
-			"lang":    r.FormValue("lang"),
-			"tz":      r.FormValue("tz"),
-			"country": country,
-		}
-
-		creative, dataBase64 := dsp.Event(ctx, data, cfg.(map[string]interface{}), waitGroup, mongoClient)
-
-		if fmt.Sprint(creative["status"]) == "200" {
-
-			w.Header().Set("Token", dataBase64)
-
-			result := map[string]interface{}{}
-			resultMultiple := []map[string]interface{}{}
-
-			linkData := map[string]interface{}{
-				"link":     creative["link"],
-				"cpc":      creative["cpc"],
-				"cpc_orig": creative["cpc_original"],
-				"dsp_id":   creative["dsp_id"],
-				"dsp_name": creative["dsp_name"],
-				"ssp_id":   creative["ssp_id"],
-				"ssp_name": creative["ssp_name"],
-				"ip":       r.FormValue("ip"),
-				"country":  country,
-				"clid":     rand.Intn(999999999-9999999) + 9999999,
-				"id":       r.FormValue("id"),
-				"uid":      r.FormValue("uid"),
-			}
-
-			jsonLink, _ := json.Marshal(linkData)
-
-			var link = ""
-			link = encrypt.Encrypt(string(jsonLink), config.Config["Crypto"].(string))
-			link = config.Config["Click_Url"].(string) + "/click?data=" + link
-
-			if fmt.Sprint(creative["ssp_name"]) == "clickadu" {
-				cpc, _ := strconv.ParseFloat(fmt.Sprintf("%.4f", creative["cpc"]), 8)
-				result = map[string]interface{}{
-					"title":       creative["title"],
-					"description": creative["body"],
-					"price":       cpc,
-					"image":       creative["image"],
-					"icon":        creative["icon"],
-					"url":         link,
-				}
-			} else if fmt.Sprint(creative["ssp_name"]) == "adskeeper" {
-				cpc, _ := strconv.ParseFloat(fmt.Sprintf("%.4f", creative["cpc"]), 8)
-				res := map[string]interface{}{
-					"text":        creative["body"],
-					"title":       creative["title"],
-					"cpc":         cpc,
-					"click_url":   link,
-					"image_url":   creative["image"],
-					"icon_url":    creative["icon"],
-					"campaign_id": creative["ssp_id"],
-					"category":    "1",
-					"id":          creative["id"],
-				}
-				resultMultiple = append(resultMultiple, res)
-			} else {
-				cpc, _ := strconv.ParseFloat(fmt.Sprintf("%.4f", creative["cpc"]), 8)
-				result = map[string]interface{}{
-					"id":          creative["id"],
-					"title":       creative["title"],
-					"description": creative["body"],
-					"icon":        creative["icon"],
-					"image":       creative["image"],
-					"url":         link,
-					"bid":         cpc,
-				}
-			}
-
-			if len(resultMultiple) > 0 {
-				res, err := json.Marshal(resultMultiple)
-				if err != nil {
-					w.WriteHeader(http.StatusNoContent)
-				}
-				w.Write(res)
-				w.WriteHeader(http.StatusOK)
-			} else {
-				res, err := json.Marshal(result)
-				if err != nil {
-					w.WriteHeader(http.StatusNoContent)
-				}
-				w.Write(res)
-				w.WriteHeader(http.StatusOK)
-			}
-
-		} else {
-			w.WriteHeader(http.StatusNoContent)
-		}
-	}
-}
-
-func ssp(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
+func sspEvent(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rdb := redis.Client()
 
