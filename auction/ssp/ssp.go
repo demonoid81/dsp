@@ -30,6 +30,7 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 		}
 
 		idx := utils.Find(SSPData, func(value interface{}) bool {
+			fmt.Println(value.(dsp.SSP).Key, " - ", sspKey)
 			return value.(dsp.SSP).Key == sspKey
 		})
 
