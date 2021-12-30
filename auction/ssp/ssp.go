@@ -22,7 +22,9 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 		w.Header().Set("Content-Type", "application/json")
 
 
+
 		sspKey := r.FormValue("key")
+		fmt.Println("sspKey", sspKey)
 
 		if sspKey == "" {
 			w.WriteHeader(http.StatusServiceUnavailable)
