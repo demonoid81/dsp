@@ -33,6 +33,8 @@ func GetIP(r *http.Request) string {
 	return ip
 }
 
+
+// todo расширить до версии
 func GetUA(r *http.Request) string {
 	ua := r.Header.Get("User-Agent")
 	return ua

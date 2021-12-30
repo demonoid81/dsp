@@ -1,6 +1,12 @@
 <template>
   <div style="overflow-y: auto;">
-    <ModalSSP :ssp="sspItem" :read-only="readOnly" :show="viewSSPModal" @close="viewSSPModal = false" @addDSS="addDSP"/>
+    <ModalSSP :ssp="sspItem"
+              :read-only="readOnly"
+              :show="viewSSPModal"
+              @close="viewSSPModal = false"
+              @addDSS="addDSP"
+              @save="saveSSP"
+    />
     <ModalDSP :dsp="dspItem"
               :read-only="readOnly"
               :show="viewDSPModal"
@@ -12,7 +18,7 @@
         <Button type="primary" @click="addDSPShow" >Add DSP</Button>
       </Col>
       <Col span="6">
-        <Button type="primary" @click="viewSSPModal=true">Add SSP</Button>
+        <Button type="primary" @click="addSSPShow">Add SSP</Button>
       </Col>
     </Row>
     <div>
@@ -122,10 +128,21 @@ export default {
   methods: {
     addDSPShow() {
       this.viewDSPModal = true
-      this.readOnly=  false
+      this.readOnly = false
+    },
+    addSSPShow() {
+      this.viewSSPModal = true
+      this.readOnly = false
     },
     saveDSP() {
       axios.post(window.location.origin + '/dsp/add',  this.dspItem)
+          .then()
+          .catch(error => {
+            console.error("There was an error!", error);
+          });
+    },
+    saveSSP() {
+      axios.post(window.location.origin + '/ssp/add',  this.dspItem)
           .then()
           .catch(error => {
             console.error("There was an error!", error);
@@ -146,7 +163,10 @@ export default {
         key:this.ssp[index].key,
         name:this.ssp[index].ssp_name,
         type:this.ssp[index].type,
-        dsp: this.ssp[index].dsp
+        dsp: {
+          ...this.ssp[index].dsp,
+          profit: this.ssp[index].dsp.profit / 10000
+        }
       }
       this.readOnly = true
       this.viewSSPModal = true

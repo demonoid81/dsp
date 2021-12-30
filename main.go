@@ -169,7 +169,7 @@ func main() {
 
 	router.Path("/clickdsp").Handler(clickdsp(ctx))
 
-	router.Path("/feed").Handler(App.sspFeed(ctx, &waitGroup, mongoClient))
+	router.Path("/feed").Handler(ssp.Feed(ctx, App.SSP, &waitGroup, mongoClient))
 
 	router.Path("/stat").Handler(App.stat(ctx))
 
@@ -205,9 +205,9 @@ func main() {
 //	return nil
 //}
 
-func (app *app)sspFeed(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
-	return ssp.Feed(ctx, app.SSP, waitGroup, mongoClient)
-}
+//func sspFeed(ctx context.Context, SSPData []dsp.SSP,  waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
+//	return ssp.Feed(ctx, app.SSP, waitGroup, mongoClient)
+//}
 
 func (app *app)reloadSSP(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

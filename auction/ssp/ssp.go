@@ -21,6 +21,7 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
+
 		sspKey := r.FormValue("key")
 
 		if sspKey == "" {
@@ -43,7 +44,7 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 			IP:      r.FormValue("ip"),
 			UA:      r.FormValue("ua"),
 			ID:      "",
-			SID:     r.FormValue("id"),
+			SID:     r.FormValue("id"), // to do в таблицу
 			Time:    r.FormValue("time"),
 			UID:     r.FormValue("uid"),
 			Lang:    r.FormValue("lang"),

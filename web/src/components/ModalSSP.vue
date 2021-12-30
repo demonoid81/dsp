@@ -8,7 +8,7 @@
     </p>
     <Form :model="ssp" :label-width="100" label-position="left">
       <FormItem label="ID:" prop="id">
-        <Input v-model="ssp.id" placeholder="Enter ssp id..." :disabled="readOnly"></Input>
+        <InputNumber style="width: 567px" v-model="ssp.id" placeholder="Enter id..." :disabled="readOnly" @on-change="$emit('update:ssp.id', $event)"></InputNumber>
       </FormItem>
       <FormItem label="Key:" prop="key">
         <Input v-model="ssp.key" placeholder="Enter ssp key..." :disabled="readOnly"></Input>
@@ -40,12 +40,12 @@
               </Row>
             </FormItem>
             <FormItem label="ID:" prop="dsp_id">
-              <Input v-model="dsp.dsp_id" placeholder="Enter dsp id..." :disabled="readOnly"
-                     style="width:420px"></Input>
+              <InputNumber style="width: 420px" v-model="dsp.dsp_id" placeholder="Enter id..." :disabled="readOnly"></InputNumber>
             </FormItem>
             <FormItem label="Revshare:" prop="profit">
-              <Input v-model="dsp.profit" placeholder="Enter dsp revshare..." :disabled="readOnly"
-                     style="width:420px"></Input>
+              <InputNumber style="width: 420px" v-model="dsp.profit" placeholder="Enter id..." :disabled="readOnly"
+                           :formatter="value => `$ ${value}`.replace(/\B(?=(\d{4})+(?!\d))/g, ',')"
+                           :parser="value => value.replace(/\$\s?|(,*)/g, '')"></InputNumber>
             </FormItem>
             <FormItem label="Source ID Blacklist:" prop="source_id_blacklist">
               <Input v-model="dsp.source_id_blacklist" placeholder="Enter ..." type="textarea" :disabled="readOnly"
