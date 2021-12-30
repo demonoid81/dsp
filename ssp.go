@@ -36,6 +36,7 @@ func (app *app) loadSSP(ctx context.Context) error {
 		return err
 	}
 	fmt.Printf("Found multiple documents: %+v\n", ssp)
+	app.SSP = ssp
 	return nil
 }
 
