@@ -365,7 +365,7 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 			Sid:    sourceId,
 			Date:   time.Unix(timeDate, 0).Format("2006-01-02"),
 			Fresh:  ts.Freshness(timestamp),
-			FeedId: string(feedId),
+			FeedId: fmt.Sprintf("%d", feedId),
 			Key:    uuid.New().String(),
 			Click:  false,
 		}
