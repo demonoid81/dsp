@@ -259,11 +259,7 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 	browser := utils.GetBrowser(ua)
 	platform := utils.GetPlatform(ua)
 
-	fmt.Println("feedId:", feedId)
-
 	var redisKey = fmt.Sprintf("%s-%s-%s-%s-%s-%d", browser, platform, country, category, pushType, feedId)
-
-	fmt.Println(redisKey)
 
 	var campaignsJson string
 
@@ -274,8 +270,6 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 		campaignsJson = redisCampaigns
 
 	} else {
-
-		fmt.Println("redisCampaigns:", redisCampaigns)
 
 		postgresCampaigns := postgres.E(country, platform, browser, category, pushType)
 
@@ -327,12 +321,6 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 		json.Unmarshal([]byte(cfgCompany["blacklist_feed"].(string)), &blacklistFeed)
 		json.Unmarshal([]byte(cfgCompany["whitelist_feed"].(string)), &whitelistFeed)
 
-		fmt.Println(timestamp)
-
-		fmt.Println("blacklist:", blacklist)
-		fmt.Println("whitelist:", whitelist)
-		fmt.Println("blacklistFeed:", blacklistFeed)
-		fmt.Println("whitelistFeed:", whitelistFeed)
 
 		if ts.Compatible(timestamp, cfgCompany["freshness"].(string)) &&
 			inArray.FindString(blacklist, sourceId) == false &&
