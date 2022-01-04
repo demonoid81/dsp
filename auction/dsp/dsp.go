@@ -121,7 +121,6 @@ func (s *single) Set(key int) {
 	s.values[key] = strconv.FormatInt(timestamp, 10) + "_" + strconv.FormatInt(count, 10)
 }
 
-
 var Creatives []Creative
 
 type DSP struct {
@@ -260,7 +259,11 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 	browser := utils.GetBrowser(ua)
 	platform := utils.GetPlatform(ua)
 
-	var redisKey = browser + "-" + platform + "-" + country + "-" + category + "-" + pushType + "-" + string(feedId)
+	fmt.Println("feedId:", feedId)
+
+	var redisKey = fmt.Sprintf("%s-%s-%s-%s-%s-%d", browser, platform, country, category, pushType, feedId)
+
+	fmt.Println(redisKey)
 
 	var campaignsJson string
 
@@ -271,6 +274,8 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 		campaignsJson = redisCampaigns
 
 	} else {
+
+		fmt.Println("redisCampaigns:", redisCampaigns)
 
 		postgresCampaigns := postgres.E(country, platform, browser, category, pushType)
 
@@ -322,11 +327,18 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 		json.Unmarshal([]byte(cfgCompany["blacklist_feed"].(string)), &blacklistFeed)
 		json.Unmarshal([]byte(cfgCompany["whitelist_feed"].(string)), &whitelistFeed)
 
+		fmt.Println(timestamp)
+
+		fmt.Println("blacklist:", blacklist)
+		fmt.Println("whitelist:", whitelist)
+		fmt.Println("blacklistFeed:", blacklistFeed)
+		fmt.Println("whitelistFeed:", whitelistFeed)
+
 		if ts.Compatible(timestamp, cfgCompany["freshness"].(string)) &&
 			inArray.FindString(blacklist, sourceId) == false &&
-			(len(whitelist) <= 0 || inArray.FindString(whitelist, sourceId) == true) &&
-			inArray.FindString(blacklistFeed, string(feedId)) == false &&
-			(len(whitelistFeed) <= 0 || inArray.FindString(whitelistFeed, string(feedId)) == true) {
+			(len(whitelist) == 0 || inArray.FindString(whitelist, sourceId) == true) &&
+			inArray.FindString(blacklistFeed, fmt.Sprintf("%d", feedId)) == false &&
+			(len(whitelistFeed) == 0 || inArray.FindString(whitelistFeed, fmt.Sprintf("%d", feedId)) == true) {
 
 			var _Campany = campany{
 				UID: cfgCompany["user_id"].(float64),

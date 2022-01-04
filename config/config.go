@@ -21,7 +21,7 @@ var Config = map[string]interface{}{
 	"Click_Url":        "https://api.labyrinthads.com",
 	"Media_Url":        "http://i.labyrinthads.com",
 	"Url_Redirect":     "https://labyrinthads.com",
-	"host":             "127.0.0.1",
+	"host":             "162.55.244.120",
 	"port":             5432,
 	"user":             "postgres",
 	"password":         "9mcP7ZxEuMNcFU",
