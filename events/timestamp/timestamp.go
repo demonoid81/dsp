@@ -2,7 +2,6 @@ package timestamp
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"time"
 )
@@ -40,10 +39,8 @@ func Compatible(timestamp string, freshness string) (bool) {
 	interval2 := currentTimestamp - (fInterval2 * sec)
 
 	if iTimestamp >= interval2 && iTimestamp <= interval1 {
-		fmt.Println("TZ Compatible: true" )
 		return true
 	} else {
-		fmt.Println("TZ Compatible: false" )
 		return false
 	}
 
