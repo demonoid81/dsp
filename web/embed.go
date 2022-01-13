@@ -1,4 +1,4 @@
-package main
+package web
 
 import (
 	"embed"
@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-//go:embed web/dist/*
+//go:embed dist/*
 var staticFiles embed.FS
 
 type UIHandler struct {

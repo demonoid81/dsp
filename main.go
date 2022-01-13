@@ -7,6 +7,7 @@ import (
 	"github.com/demonoid81/dsp/auction/ssp"
 	"github.com/demonoid81/dsp/events/kafkaMessage"
 	"github.com/demonoid81/dsp/events/mongodb"
+	"github.com/demonoid81/dsp/web"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -183,7 +184,7 @@ func main() {
 	router.Path("/dsp/add").Methods("POST").Handler(App.addDSP(ctx))
 	router.Path("/dsp/update").Methods("POST").Handler(App.updateDSP(ctx))
 
-	ui := UIHandler{staticFS: staticFiles, staticPath: "web/dist", indexPath: "index.html"}
+	ui := web.UIHandler{staticFS: web.staticFiles, staticPath: "web/dist", indexPath: "index.html"}
 	router.PathPrefix("/").Handler(ui)
 
 	corsHandler := cors.Default().Handler(router)
@@ -434,6 +435,36 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 
 			var link = data["link"].(string)
 
+			if strings.Contains(link, "labyrinthads.com") {
+
+
+				u, err := url.Parse(link)
+				if err != nil {
+					http.Redirect(w, r, config.Config["Url_Redirect"].(string), 302)
+					return
+				}
+				fmt.Println(u.RawQuery)
+
+				q, err := url.ParseQuery(u.RawQuery)
+				if err != nil {
+					http.Redirect(w, r, config.Config["Url_Redirect"].(string), 302)
+					return
+				}
+
+				dataGet := q.Get("data")
+
+				if dataGet != "" {
+					jsonData := encrypt.Decrypt(dataGet, config.Config["Crypto"].(string))
+					
+					json.Unmarshal([]byte(jsonData), &data)
+					link = data["link"].(string)
+
+				} else {
+					http.Redirect(w, r, config.Config["Url_Redirect"].(string), 302)
+					return
+				}
+			}
+
 			if strings.Contains(link, "{SOURCE_ID}") {
 				link = strings.Replace(link, "{SOURCE_ID}", data["sid"].(string), -1)
 			}
@@ -458,6 +489,8 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 					link = strings.Replace(link, "{FRESHNESS}", data["fresh"].(string), -1)
 				}
 			}
+			
+			fmt.Println("feed_id:", data["feed_id"], " " , data["feed_id"].(string))
 
 			if _, feedId := data["feed_id"]; feedId {
 				if strings.Contains(link, "{FEED_ID}") {
@@ -476,10 +509,10 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 
 			go kafkaMessage.SendMessage(ctx, string(jsonKafka), config.Config["Kafka"].(map[string]interface{})["click"].(map[string]interface{}))
 
-			http.Redirect(w, r, data["link"].(string), 301)
+			http.Redirect(w, r, data["link"].(string), 302)
 
 		} else {
-			http.Redirect(w, r, config.Config["Url_Redirect"].(string), 301)
+			http.Redirect(w, r, config.Config["Url_Redirect"].(string), 302)
 		}
 	}
 }
