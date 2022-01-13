@@ -7,7 +7,6 @@ import (
 	"github.com/demonoid81/dsp/auction/ssp"
 	"github.com/demonoid81/dsp/events/kafkaMessage"
 	"github.com/demonoid81/dsp/events/mongodb"
-	"github.com/demonoid81/dsp/web"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -184,7 +183,7 @@ func main() {
 	router.Path("/dsp/add").Methods("POST").Handler(App.addDSP(ctx))
 	router.Path("/dsp/update").Methods("POST").Handler(App.updateDSP(ctx))
 
-	ui := UIHandler{staticFS: web.staticFiles, staticPath: "web/dist", indexPath: "index.html"}
+	ui := UIHandler{staticFS: staticFiles, staticPath: "web/dist", indexPath: "index.html"}
 	router.PathPrefix("/").Handler(ui)
 
 	corsHandler := cors.Default().Handler(router)
