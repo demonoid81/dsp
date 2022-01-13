@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-//go:embed dist/*
+//go:embed web/dist/*
 var staticFiles embed.FS
 
 type UIHandler struct {
