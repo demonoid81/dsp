@@ -184,7 +184,7 @@ func main() {
 	router.Path("/dsp/add").Methods("POST").Handler(App.addDSP(ctx))
 	router.Path("/dsp/update").Methods("POST").Handler(App.updateDSP(ctx))
 
-	ui := web.UIHandler{staticFS: web.staticFiles, staticPath: "web/dist", indexPath: "index.html"}
+	ui := UIHandler{staticFS: web.staticFiles, staticPath: "web/dist", indexPath: "index.html"}
 	router.PathPrefix("/").Handler(ui)
 
 	corsHandler := cors.Default().Handler(router)
