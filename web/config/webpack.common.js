@@ -1,4 +1,4 @@
-const pathtoresolve = require('path');
+const path = require('path');
 const paths = require('./paths')
 
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
@@ -13,10 +13,14 @@ module.exports = {
     resolve: {
         extensions: [ '.js', '.vue' ],
         alias: {
-            'components': pathtoresolve.resolve(__dirname, '../src/components/'),
-            'images': pathtoresolve.resolve(__dirname, '../src/images/'),
-            'styles': pathtoresolve.resolve(__dirname, '../src/styles/'),
-            'utils': pathtoresolve.resolve(__dirname, '../src/utils/'),
+            'components': path.resolve(__dirname, '../src/components/'),
+            'view': path.resolve(__dirname, '../src/view/'),
+            'images': path.resolve(__dirname, '../src/images/'),
+            'styles': path.resolve(__dirname, '../src/styles/'),
+            'utils': path.resolve(__dirname, '../src/utils/'),
+            'config' : path.resolve(__dirname, '../src/config'),
+            'store' : path.resolve(__dirname, '../src/store'),
+            'router' : path.resolve(__dirname, '../src/router'),
         }
     },
 

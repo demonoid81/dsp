@@ -30,6 +30,9 @@ module.exports = merge(common, {
             '/dsp': {
                 target: 'http://localhost:9099',
             },
+            '/auth': {
+                target: 'http://localhost:9099',
+            },
         }
     },
 

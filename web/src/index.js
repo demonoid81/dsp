@@ -1,29 +1,22 @@
 import Vue from 'vue';
-import VueRouter from 'vue-router';
-import Vuex from 'vuex';
-
 import ViewUI from 'view-design';
 import 'view-design/dist/styles/iview.css';
-
-// Import Vue App, routes, store
 import App from './App.vue';
-import routes from './routes';
-import store from "./store/store";
+import store from "store";
+import router from "router";
+import i18n from './locale'
+import config from "config";
 
-Vue.use(VueRouter);
+
 
 Vue.use(ViewUI);
 
-// Configure router
-const router = new VueRouter({
-    routes,
-    linkActiveClass: 'active',
-    mode: 'history'
-});
+Vue.prototype.$config = config
 
 new Vue({
     el: '#app',
     router,
     store,
+    i18n,
     render: h => h(App)
 })
