@@ -135,8 +135,8 @@ func HTTPServer(app *app.Env) {
 
 	corsHandler := cors.Default().Handler(router)
 
-	fmt.Println("Serving requests on port 9099")
-	err = http.ListenAndServe(":9099", corsHandler)
+	fmt.Println("Serving requests on port 9999")
+	err = http.ListenAndServe(":9999", corsHandler)
 	fmt.Println(err)
 }
 
