@@ -17,10 +17,10 @@ module.exports = {
             'view': path.resolve(__dirname, '../src/view/'),
             'images': path.resolve(__dirname, '../src/images/'),
             'styles': path.resolve(__dirname, '../src/styles/'),
-            'utils': path.resolve(__dirname, '../src/utils/'),
-            'config' : path.resolve(__dirname, '../src/config'),
-            'store' : path.resolve(__dirname, '../src/store'),
-            'router' : path.resolve(__dirname, '../src/router'),
+            'config' : path.resolve(__dirname, '../src/config/'),
+            'store' : path.resolve(__dirname, '../src/store/'),
+            'router' : path.resolve(__dirname, '../src/router/'),
+            'libs' : path.resolve(__dirname, '../src/libs/'),
         }
     },
 

@@ -8,8 +8,8 @@
     </div>
 </template>
 <script>
-import { scrollTop } from '@/libs/util'
-import { on, off } from '@/libs/tools'
+import { scrollTop } from 'libs/utils'
+import { on, off } from 'libs/tools'
 const prefixCls = 'ivu-back-top'
 
 export default {

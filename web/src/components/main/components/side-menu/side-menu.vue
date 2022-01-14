@@ -26,8 +26,11 @@
 <script>
 import SideMenuItem from './side-menu-item.vue'
 import CollapsedMenu from './collapsed-menu.vue'
-// import { getUnion } from '@/libs/tools'
 import mixin from './mixin'
+
+export const getUnion = (arr1, arr2) => {
+  return Array.from(new Set([...arr1, ...arr2]))
+}
 
 export default {
   name: 'SideMenu',

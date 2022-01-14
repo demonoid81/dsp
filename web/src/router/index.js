@@ -2,7 +2,7 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import ViewUI from 'view-design';
 import routes from './routers'
-import { setTitle } from 'utils/utils'
+import { setTitle } from 'libs/utils'
 import store from "store/index";
 
 import config from 'config/index'

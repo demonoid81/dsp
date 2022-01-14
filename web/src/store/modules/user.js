@@ -47,7 +47,8 @@ export default {
     namespaced: true,
     state: {
         user: null,
-        token: getToken()
+        token: getToken(),
+        access: null
     },
     actions,
     mutations,

@@ -73,7 +73,7 @@
   </Modal>
 </template>
 <script>
-import countries from "../utils/countries";
+import countries from "../../libs/countries";
 
 export default {
   name: 'ModalSSP',

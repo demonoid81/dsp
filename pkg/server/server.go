@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/demonoid81/dsp"
 	"github.com/demonoid81/dsp/app"
 	"github.com/demonoid81/dsp/web"
 	"github.com/gorilla/mux"
@@ -131,7 +130,7 @@ func HTTPServer(app *app.Env) {
 	//router.Path("/dsp/add").Methods("POST").Handler(App.addDSP(ctx))
 	//router.Path("/dsp/update").Methods("POST").Handler(App.updateDSP(ctx))
 	//
-	ui := main.UIHandler{StaticFS: web.StaticFiles, StaticPath: "dist", IndexPath: "index.html"}
+	ui := web.UIHandler{StaticFS: web.StaticFiles, StaticPath: "dist", IndexPath: "index.html"}
 	router.PathPrefix("/").Handler(ui)
 
 	corsHandler := cors.Default().Handler(router)

@@ -33,4 +33,61 @@ export default [
             }
         ]
     },
+    {
+        path: '/statistics',
+        name: 'statistics',
+        component: () => import('components/main'),
+        meta: {
+            hideInBread: true
+        },
+        children: [
+            {
+                path: 'statistics',
+                name: 'statistics',
+                meta: {
+                    icon: '_qq',
+                    title: 'Statistics'
+                },
+                component: () => import('view/statistics/statistics.vue')
+            }
+        ]
+    },
+    {
+        path: '/dsp',
+        name: 'dsp',
+        component: () => import('components/main'),
+        meta: {
+            hideInBread: true
+        },
+        children: [
+            {
+                path: 'dsp',
+                name: 'dsp',
+                meta: {
+                    icon: '_qq',
+                    title: 'DSP'
+                },
+                component: () => import('view/dsp/sspTable.vue')
+            }
+        ]
+    },
+    {
+        path: '/companies',
+        name: 'companies',
+        component: () => import('components/main'),
+        meta: {
+            hideInBread: true
+        },
+        children: [
+            {
+                path: '',
+                name: 'companies',
+                meta: {
+                    icon: '_qq',
+                    title: 'Companies'
+                },
+                component: () => import('view/statistics/statistics.vue')
+            }
+        ]
+    },
 ]
