@@ -514,7 +514,7 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 				go updateReq(ctx, key.(string), waitGroup, mongoClient)
 			}
 
-			fmt.Println("{CAMPAIGN_ID}", data["cid"].(string))
+			fmt.Println("{SOURCE_ID}", data["sid"].(string))
 
 			totalRequestsByFeed.WithLabelValues("click", data["feed_id"].(string)).Inc()
 
