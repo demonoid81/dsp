@@ -514,6 +514,8 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 				go updateReq(ctx, key.(string), waitGroup, mongoClient)
 			}
 
+			fmt.Println("{CAMPAIGN_ID}", data["cid"].(string))
+
 			totalRequestsByFeed.WithLabelValues("click", data["feed_id"].(string)).Inc()
 
 			go kafkaMessage.SendMessage(ctx, string(jsonKafka), config.Config["Kafka"].(map[string]interface{})["click"].(map[string]interface{}))
