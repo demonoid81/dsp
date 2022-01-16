@@ -89,6 +89,14 @@ var totalRequests = prometheus.NewCounterVec(
 	[]string{"path"},
 )
 
+var totalRequestsByFeed = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "http_requests_by_feed_total",
+		Help: "Number of get requests by feed.",
+	},
+	[]string{"path", "feed"},
+)
+
 var responseStatus = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Name: "response_status",
@@ -209,7 +217,7 @@ func main() {
 //	return ssp.Feed(ctx, app.SSP, waitGroup, mongoClient)
 //}
 
-func (app *app)reloadSSP(ctx context.Context) http.HandlerFunc {
+func (app *app) reloadSSP(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := app.loadSSP(ctx)
 		if err != nil {
@@ -436,7 +444,6 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 
 			if strings.Contains(link, "labyrinthads.com") {
 
-
 				u, err := url.Parse(link)
 				if err != nil {
 					http.Redirect(w, r, config.Config["Url_Redirect"].(string), 302)
@@ -454,7 +461,7 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 
 				if dataGet != "" {
 					jsonData := encrypt.Decrypt(dataGet, config.Config["Crypto"].(string))
-					
+
 					json.Unmarshal([]byte(jsonData), &data)
 					link = data["link"].(string)
 
@@ -488,8 +495,8 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 					link = strings.Replace(link, "{FRESHNESS}", data["fresh"].(string), -1)
 				}
 			}
-			
-			fmt.Println("feed_id:", data["feed_id"], " " , data["feed_id"].(string))
+
+			fmt.Println("feed_id:", data["feed_id"], " ", data["feed_id"].(string))
 
 			if _, feedId := data["feed_id"]; feedId {
 				if strings.Contains(link, "{FEED_ID}") {
@@ -505,6 +512,8 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 				waitGroup.Add(1)
 				go updateReq(ctx, key.(string), waitGroup, mongoClient)
 			}
+
+			totalRequestsByFeed.WithLabelValues("click", data["feed_id"].(string)).Inc()
 
 			go kafkaMessage.SendMessage(ctx, string(jsonKafka), config.Config["Kafka"].(map[string]interface{})["click"].(map[string]interface{}))
 

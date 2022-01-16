@@ -21,8 +21,6 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-
-
 		sspKey := r.FormValue("key")
 
 		if sspKey == "" {
@@ -109,7 +107,6 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 				}
 				resultMultiple = append(resultMultiple, res)
 			default:
-
 				cpc, _ := strconv.ParseFloat(fmt.Sprintf("%.4f", creative.Cpc), 8)
 				result = map[string]interface{}{
 					"id":          creative.ID,
