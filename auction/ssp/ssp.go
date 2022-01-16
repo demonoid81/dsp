@@ -79,6 +79,8 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 			link = encrypt.Encrypt(string(jsonLink), config.Config["Crypto"].(string))
 			link = config.Config["Click_Url"].(string) + "/click?data=" + link
 
+			fmt.Println("id",          creative.ID)
+
 			switch creative.SSPName {
 			case "clickadu":
 				cpc, _ := strconv.ParseFloat(fmt.Sprintf("%.4f", creative.Cpc), 8)
