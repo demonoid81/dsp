@@ -130,6 +130,7 @@ func prometheusMiddleware(next http.Handler) http.Handler {
 
 func init() {
 	prometheus.Register(totalRequests)
+	prometheus.Register(totalRequestsByFeed)
 	prometheus.Register(responseStatus)
 	prometheus.Register(httpDuration)
 	App = &app{}
