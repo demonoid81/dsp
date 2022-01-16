@@ -32,6 +32,7 @@
     </div>
   </Modal>
 </template>
+
 <script>
 export default {
   name: 'ModalDSP',

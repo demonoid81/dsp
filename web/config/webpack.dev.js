@@ -33,6 +33,9 @@ module.exports = merge(common, {
             '/auth': {
                 target: 'http://localhost:9099',
             },
+            '/api': {
+                target: 'http://localhost:9099',
+            },
         }
     },
 

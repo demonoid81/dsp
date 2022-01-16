@@ -35,7 +35,7 @@ export default [
     },
     {
         path: '/statistics',
-        name: 'statistics',
+        name: '_statistics',
         component: () => import('components/main'),
         meta: {
             hideInBread: true
@@ -54,7 +54,7 @@ export default [
     },
     {
         path: '/dsp',
-        name: 'dsp',
+        name: '_dsp',
         component: () => import('components/main'),
         meta: {
             hideInBread: true
@@ -72,8 +72,8 @@ export default [
         ]
     },
     {
-        path: '/companies',
-        name: 'companies',
+        path: '/campaigns',
+        name: '_campaigns',
         component: () => import('components/main'),
         meta: {
             hideInBread: true
@@ -81,10 +81,39 @@ export default [
         children: [
             {
                 path: '',
-                name: 'companies',
+                name: 'Сampaigns',
                 meta: {
                     icon: '_qq',
-                    title: 'Companies'
+                    title: 'Сampaigns'
+                },
+                component: () => import('view/campaigns/campaigns.vue')
+            }
+        ]
+    },
+    {
+        path: '/setting',
+        name: 'Settings',
+        component: () => import('components/main'),
+        meta: {
+            icon: 'logo-buffer',
+            title: 'Settings'
+        },
+        children: [
+            {
+                path: 'users',
+                name: 'users',
+                meta: {
+                    icon: '_qq',
+                    title: 'Users'
+                },
+                component: () => import('view/statistics/statistics.vue')
+            },
+            {
+                path: 'groups',
+                name: 'groups',
+                meta: {
+                    icon: '_qq',
+                    title: 'Groups'
                 },
                 component: () => import('view/statistics/statistics.vue')
             }
