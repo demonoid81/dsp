@@ -204,7 +204,8 @@ func Event(ctx context.Context, data ReqData, sspData SSP, waitGroup *sync.WaitG
 			counters.Get(dsp.ID) <= DSPData[idx].QPS/2 {
 
 			counters.Set(dsp.ID)
-			data.ID = string(dsp.ID) + string(sspData.ID) + data.SID
+
+			data.ID = fmt.Sprintf("%d%d%s", dsp.ID, sspData.ID, data.SID)
 
 			res := Affiliates[DSPData[idx].Name](ctx, data, cfg, waitGroup, mongoClient)
 			creatives = append(creatives, res)
