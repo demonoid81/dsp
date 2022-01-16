@@ -178,7 +178,7 @@ func main() {
 
 	router.Path("/clickdsp").Handler(clickdsp(ctx))
 
-	router.Path("/feed").Handler(ssp.Feed(ctx, App.SSP, &waitGroup, mongoClient))
+	router.Path("/feed").Handler(ssp.Feed(ctx, App.SSP, &waitGroup, mongoClient, totalRequestsByFeed))
 
 	router.Path("/stat").Handler(App.stat(ctx))
 

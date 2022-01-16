@@ -116,7 +116,7 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 				}
 			}
 
-			counter.WithLabelValues("feed", fmt.Sprintf("$d", creative.SSPID)).Inc()
+			counter.WithLabelValues("feed", fmt.Sprintf("%d", creative.SSPID)).Inc()
 
 			res, err := json.Marshal(result)
 			if err != nil {
