@@ -207,6 +207,8 @@ func Event(ctx context.Context, data ReqData, sspData SSP, waitGroup *sync.WaitG
 
 			data.ID = fmt.Sprintf("%d%d%s", dsp.ID, sspData.ID, data.SID)
 
+			fmt.Println(data.ID)
+
 			res := Affiliates[DSPData[idx].Name](ctx, data, cfg, waitGroup, mongoClient)
 			creatives = append(creatives, res)
 		}
