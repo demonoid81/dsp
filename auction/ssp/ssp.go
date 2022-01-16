@@ -57,7 +57,7 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 
 			result := map[string]interface{}{}
 
-			fmt.Println("dsp_id",   creative.DSPID)
+			fmt.Println("ssp_id", creative.SSPID)
 
 			linkData := map[string]interface{}{
 				"link":     creative.Link,
