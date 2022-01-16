@@ -15,8 +15,6 @@ import (
 	"sync"
 )
 
-
-
 func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -58,7 +56,8 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 			w.Header().Set("Token", dataBase64)
 
 			result := map[string]interface{}{}
-			resultMultiple := []map[string]interface{}{}
+
+			fmt.Println("dsp_id",   creative.DSPID)
 
 			linkData := map[string]interface{}{
 				"link":     creative.Link,
@@ -94,7 +93,7 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 				}
 			case "adskeeper":
 				cpc, _ := strconv.ParseFloat(fmt.Sprintf("%.4f", creative.Cpc), 8)
-				res := map[string]interface{}{
+				result = map[string]interface{}{
 					"text":        creative.Body,
 					"title":       creative.Title,
 					"cpc":         cpc,
@@ -105,7 +104,6 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 					"category":    "1",
 					"id":          creative.ID,
 				}
-				resultMultiple = append(resultMultiple, res)
 			default:
 				cpc, _ := strconv.ParseFloat(fmt.Sprintf("%.4f", creative.Cpc), 8)
 				result = map[string]interface{}{
@@ -118,25 +116,16 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 					"bid":         cpc,
 				}
 			}
-			if len(resultMultiple) > 0 {
-				res, err := json.Marshal(resultMultiple)
-				if err != nil {
-					w.WriteHeader(http.StatusNoContent)
-					return
-				}
-				w.Write(res)
-				w.WriteHeader(http.StatusOK)
-				return
-			} else {
-				res, err := json.Marshal(result)
-				if err != nil {
-					w.WriteHeader(http.StatusNoContent)
-					return
-				}
-				w.Write(res)
-				w.WriteHeader(http.StatusOK)
+
+			res, err := json.Marshal(result)
+			if err != nil {
+				w.WriteHeader(http.StatusNoContent)
 				return
 			}
+			w.Write(res)
+			w.WriteHeader(http.StatusOK)
+			return
+
 		}
 		w.WriteHeader(http.StatusNoContent)
 	}
