@@ -97,6 +97,14 @@ var totalRequestsByFeed = prometheus.NewCounterVec(
 	[]string{"path", "feed"},
 )
 
+var totalRequestsBySID = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "http_requests_by_sid_total",
+		Help: "Number of get requests by SID.",
+	},
+	[]string{"path", "sid"},
+)
+
 var responseStatus = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Name: "response_status",
@@ -131,6 +139,7 @@ func prometheusMiddleware(next http.Handler) http.Handler {
 func init() {
 	prometheus.Register(totalRequests)
 	prometheus.Register(totalRequestsByFeed)
+	prometheus.Register(totalRequestsBySID)
 	prometheus.Register(responseStatus)
 	prometheus.Register(httpDuration)
 	App = &app{}
@@ -178,7 +187,7 @@ func main() {
 
 	router.Path("/clickdsp").Handler(clickdsp(ctx))
 
-	router.Path("/feed").Handler(ssp.Feed(ctx, App.SSP, &waitGroup, mongoClient, totalRequestsByFeed))
+	router.Path("/feed").Handler(ssp.Feed(ctx, App.SSP, &waitGroup, mongoClient, totalRequestsByFeed, totalRequestsBySID))
 
 	router.Path("/stat").Handler(App.stat(ctx))
 

@@ -16,7 +16,7 @@ import (
 	"sync"
 )
 
-func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client, counter *prometheus.CounterVec) http.HandlerFunc {
+func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client, counter *prometheus.CounterVec, counterSID *prometheus.CounterVec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -79,7 +79,7 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 			link = encrypt.Encrypt(string(jsonLink), config.Config["Crypto"].(string))
 			link = config.Config["Click_Url"].(string) + "/click?data=" + link
 
-			fmt.Println("id",          creative.ID)
+			fmt.Println("id", creative.ID)
 
 			switch creative.SSPName {
 			case "clickadu":
@@ -119,6 +119,7 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 			}
 
 			counter.WithLabelValues("feed", fmt.Sprintf("%d", creative.SSPID)).Inc()
+			counterSID.WithLabelValues("feed", creative.SID).Inc()
 
 			res, err := json.Marshal(result)
 			if err != nil {

@@ -73,6 +73,7 @@ type Creative struct {
 	SSPID       int     `json:"ssp_id"`
 	SSPName     string  `json:"ssp_name"`
 	Timestamp   int     `json:"timestamp"`
+	SID			string `json:"-"`
 }
 
 var Affiliates = map[string]func(ctx context.Context, data ReqData, config DataDSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) Creative{
@@ -341,6 +342,8 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 				Aig: cfgCompany["ad_image"].(string),
 				Ccr: cfgCompany["company_country"].(string),
 			}
+
+			fmt.Println(_Campany)
 			Campaigns = append(Campaigns, _Campany)
 
 		}
@@ -397,6 +400,8 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 			DSPName:     cfg.DSPName,
 			SSPID:       cfg.SSPID,
 			SSPName:     cfg.SSPName,
+			SID:    sourceId,
+
 		}
 	} else {
 		return Creative{
