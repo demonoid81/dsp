@@ -439,8 +439,6 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 		keys := r.URL.Query()
 		dataGet := keys.Get("data")
 
-		fmt.Println(dataGet)
-
 		if dataGet != "" {
 
 			jsonData := encrypt.Decrypt(dataGet, config.Config["Crypto"].(string))
@@ -459,7 +457,6 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 					http.Redirect(w, r, config.Config["Url_Redirect"].(string), 302)
 					return
 				}
-				fmt.Println(u.RawQuery)
 
 				q, err := url.ParseQuery(u.RawQuery)
 				if err != nil {
@@ -506,8 +503,6 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 				}
 			}
 
-			fmt.Println("feed_id:", data["feed_id"], " ", data["feed_id"].(string))
-
 			if _, feedId := data["feed_id"]; feedId {
 				if strings.Contains(link, "{FEED_ID}") {
 					link = strings.Replace(link, "{FEED_ID}", data["feed_id"].(string), -1)
@@ -522,8 +517,6 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 				waitGroup.Add(1)
 				go updateReq(ctx, key.(string), waitGroup, mongoClient)
 			}
-
-			fmt.Println("{SOURCE_ID}", data["sid"].(string))
 
 			totalRequestsByFeed.WithLabelValues("click", data["feed_id"].(string)).Inc()
 			totalRequestsBySID.WithLabelValues("click", data["sid"].(string)).Inc()

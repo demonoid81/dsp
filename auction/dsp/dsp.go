@@ -343,7 +343,6 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 				Ccr: cfgCompany["company_country"].(string),
 			}
 
-			fmt.Println(_Campany)
 			Campaigns = append(Campaigns, _Campany)
 
 		}
