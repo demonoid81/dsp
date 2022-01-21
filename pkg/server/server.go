@@ -96,7 +96,6 @@ func HTTPServer(app *app.Env) {
 	//	return
 	//}
 
-
 	server.getCampaign(ctx)
 
 	router := mux.NewRouter()
@@ -104,11 +103,8 @@ func HTTPServer(app *app.Env) {
 
 	router.Path("/prometheus").Handler(promhttp.Handler())
 
-
 	router.Path("/auth").Handler(server.loginHandler(ctx))
 	apiRouter := router.PathPrefix("/api").Subrouter()
-
-
 
 	apiRouter.Path("/reg").Methods("POST").Handler(server.registerHandler(ctx))
 	apiRouter.Path("/countries").Handler(server.getCountries(ctx))
@@ -142,8 +138,8 @@ func HTTPServer(app *app.Env) {
 
 	corsHandler := cors.Default().Handler(router)
 
-	fmt.Println("Serving requests on port 9099")
-	err = http.ListenAndServe(":9099", corsHandler)
+	fmt.Println("Serving requests on port 9999")
+	err = http.ListenAndServe(":9999", corsHandler)
 	fmt.Println(err)
 }
 
