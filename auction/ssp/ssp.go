@@ -7,6 +7,7 @@ import (
 	"github.com/demonoid81/dsp/auction/dsp"
 	"github.com/demonoid81/dsp/config"
 	"github.com/demonoid81/dsp/events/encrypt"
+	"github.com/demonoid81/dsp/events/redis"
 	"github.com/demonoid81/dsp/events/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,6 +20,8 @@ import (
 func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client, counter *prometheus.CounterVec, counterSID *prometheus.CounterVec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+
+		rdb := redis.Client()
 
 		sspKey := r.FormValue("key")
 
@@ -43,7 +46,7 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 			IP:      r.FormValue("ip"),
 			UA:      r.FormValue("ua"),
 			ID:      "",
-			SID:     r.FormValue("id"), // to do в таблицу
+			SID:     r.FormValue("id"),
 			Time:    r.FormValue("time"),
 			UID:     r.FormValue("uid"),
 			Lang:    r.FormValue("lang"),
@@ -55,6 +58,21 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 		if creative.Status == 200 {
 
 			w.Header().Set("Token", dataBase64)
+
+			if creative.SSPID == 124 {
+				redisKey := fmt.Sprintf("%d_%s_%s", creative.SSPID, r.FormValue("ip"), r.FormValue("ua"))
+				unicaleReq := redis.Get(rdb, redisKey)
+				if unicaleReq == "error" {
+					set := redis.Set(rdb, redisKey, "1")
+					if set == "error" {
+						w.WriteHeader(http.StatusNoContent)
+						return
+					}
+				} else {
+					w.WriteHeader(http.StatusNoContent)
+					return
+				}
+			}
 
 			result := map[string]interface{}{}
 
