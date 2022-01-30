@@ -50,7 +50,7 @@ func (app *app) RebuldStat(ctx context.Context) error {
 			"sid":     bson.M{"$eq": elem.Sid},
 		}
 		var data LData
-		if err := statCollection.FindOne(ctx, filter).Decode(data); err != nil {
+		if err := statCollection.FindOne(ctx, filter).Decode(&data); err != nil {
 			if err == mongo.ErrNoDocuments {
 				data := LData{
 					Country: elem.Cou,
