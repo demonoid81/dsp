@@ -74,22 +74,21 @@ func (app *app) RebuldStat(ctx context.Context) error {
 				fmt.Println("Decode(data)")
 				return err
 			}
-			if elem.Click {
-				data.Clicks = data.Clicks + 1
-			}
-			update := bson.M{
-				"$set": bson.M{
-					"req_feed": data.ReqFeed + 1,
-					"clicks":   data.Clicks,
-				},
-			}
-			result, err := statCollection.UpdateOne(ctx, filter, update)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Updated %v Documents!\n", result.ModifiedCount)
 		}
-
+		if elem.Click {
+			data.Clicks = data.Clicks + 1
+		}
+		update := bson.M{
+			"$set": bson.M{
+				"req_feed": data.ReqFeed + 1,
+				"clicks":   data.Clicks,
+			},
+		}
+		result, err := statCollection.UpdateOne(ctx, filter, update)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Updated %v Documents!\n", result.ModifiedCount)
 	}
 	return nil
 }
