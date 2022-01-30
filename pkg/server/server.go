@@ -121,9 +121,9 @@ func HTTPServer(app *app.Env) {
 	//
 	//router.Path("/feed").Handler(ssp.Feed(ctx, App.SSP, &waitGroup, mongoClient))
 	//
-	//router.Path("/stat").Handler(App.stat(ctx))
+	apiRouter.Path("/stat").Handler(server.stat(ctx))
 	//
-	//router.Path("/ssp/get").Handler(App.getSSP(ctx))
+	apiRouter.Path("/ssp/get").Handler(server.getSSP(ctx))
 	//
 	//router.Path("/ssp/add").Handler(server.addSSP(ctx, mongoClient))
 	//router.Path("/ssp/update").Handler(server.addSSP(ctx, mongoClient))
@@ -138,8 +138,8 @@ func HTTPServer(app *app.Env) {
 
 	corsHandler := cors.Default().Handler(router)
 
-	fmt.Println("Serving requests on port 9999")
-	err = http.ListenAndServe(":9999", corsHandler)
+	fmt.Println("Serving requests on port 9099")
+	err = http.ListenAndServe(":9099", corsHandler)
 	fmt.Println(err)
 }
 

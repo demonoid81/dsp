@@ -192,11 +192,11 @@ export default {
   },
   mounted() {
     axios
-        .get(window.location.origin + '/ssp/get')
+        .get(window.location.origin + 'api/ssp/get')
         .then(response => (this.ssp = response.data))
 
     axios
-        .get(window.location.origin + '/dsp/get')
+        .get(window.location.origin + 'api/dsp/get')
         .then(response => (this.dsp = response.data))
   }
 }

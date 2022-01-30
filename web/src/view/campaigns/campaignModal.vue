@@ -5,7 +5,7 @@
          @on-cancel="closeEvent">
     <p slot="header" style="color:#f60;text-align:center">
       <Icon type="ios-information-circle"></Icon>
-      <span>Delete confirmation</span>
+      <span>Create compaing</span>
     </p>
     <Form :model="campaign" :label-width="200" :rules="campaignValidate">
       <FormItem label="Name" prop="name">
@@ -134,13 +134,13 @@
           <Form :model="campaign" :label-width="200" :rules="campaignValidate">
             <FormItem label="OS">
               <Select :value="campaign.target.os" multiple @on-change="changeCampaignCountry($event, index)" filterable
-                      placeholder="Select campaign country">
-                <Option v-for="item in getOS" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                      placeholder="Select campaign OS">
+                <Option v-for="item in getOS" :value="item.value" :key="item.value">{{ item.value }}</Option>
               </Select>
             </FormItem>
             <FormItem label="Browser">
               <Select :value="campaign.target.browser" @on-change="changeCampaignCountry($event, index)" filterable
-                      placeholder="Select campaign country">
+                      placeholder="Select campaign Browser">
                 <Option v-for="item in getBrowser" :value="item.value" :key="item.value">{{ item.label }}</Option>
               </Select>
             </FormItem>

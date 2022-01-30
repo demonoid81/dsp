@@ -1,5 +1,14 @@
 package server
 
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/demonoid81/dsp/auction/dsp"
+	"go.mongodb.org/mongo-driver/bson"
+	"net/http"
+)
+
 //import (
 //	"context"
 //	"encoding/json"
@@ -39,45 +48,45 @@ package server
 //	return nil
 //}
 //
-//func (s *Server) getSSP(ctx context.Context) http.HandlerFunc {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		var ssp []dsp.SSP
-//
-//		collection := s.mongo.MongoClient.Database(s.cfg.MongoDatabase).Collection("ssp")
-//		cur, err := collection.Find(ctx, bson.D{{}})
-//		if err != nil {
-//			http.Error(w, err.Error(), http.StatusInternalServerError)
-//			return
-//		}
-//		defer cur.Close(ctx)
-//
-//		for cur.Next(ctx) {
-//			//Create a value into which the single document can be decoded
-//			var elem dsp.SSP
-//			err := cur.Decode(&elem)
-//			if err != nil {
-//				http.Error(w, err.Error(), http.StatusInternalServerError)
-//				return
-//			}
-//
-//			ssp = append(ssp, elem)
-//
-//		}
-//		if err := cur.Err(); err != nil {
-//			http.Error(w, err.Error(), http.StatusInternalServerError)
-//			return
-//		}
-//		fmt.Printf("Found multiple documents: %+v\n", ssp)
-//		res, err := json.Marshal(ssp)
-//		if err != nil {
-//			http.Error(w, err.Error(), http.StatusInternalServerError)
-//			return
-//		}
-//
-//		w.Write(res)
-//		w.WriteHeader(http.StatusOK)
-//	}
-//}
+func (s *Server) getSSP(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var ssp []dsp.SSP
+
+		collection := s.mongo.MongoClient.Database(s.cfg.MongoDatabase).Collection("ssp")
+		cur, err := collection.Find(ctx, bson.D{{}})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer cur.Close(ctx)
+
+		for cur.Next(ctx) {
+			//Create a value into which the single document can be decoded
+			var elem dsp.SSP
+			err := cur.Decode(&elem)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			ssp = append(ssp, elem)
+
+		}
+		if err := cur.Err(); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Printf("Found multiple documents: %+v\n", ssp)
+		res, err := json.Marshal(ssp)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Write(res)
+		w.WriteHeader(http.StatusOK)
+	}
+}
 //
 //func (s *Server) addSSP(ctx context.Context, client *mongo.Client) http.HandlerFunc {
 //	return func(w http.ResponseWriter, r *http.Request) {

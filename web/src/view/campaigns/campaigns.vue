@@ -45,7 +45,7 @@ export default {
   components: {CompanyModal},
   data() {
     return {
-      showModal: true,
+      showModal: false,
       columns: [
         {type: 'selection', width: 60, align: 'center'},
         {title: 'ID', key: 'id'},

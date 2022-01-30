@@ -2027,6 +2027,11 @@
   dependencies:
     "css-tree" "^1.1.2"
 
+"dateformat@^5.0.2":
+  "integrity" "sha512-h9vywpuz+ReixnJTwFx5JLtZpS8eLCbRm8shwwKkCKOZA547N6yoMtD3W91Z6+NFZ8wOaZlcaCcK/w+kELhSVg=="
+  "resolved" "https://registry.npmjs.org/dateformat/-/dateformat-5.0.2.tgz"
+  "version" "5.0.2"
+
 "de-indent@^1.0.2":
   "integrity" "sha1-sgOOhG3DO6pXlhKNCAS0VbjB4h0="
   "resolved" "https://registry.npmjs.org/de-indent/-/de-indent-1.0.2.tgz"

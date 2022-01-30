@@ -1,8 +1,22 @@
 <template>
   <div>
-      <canvas ref="canvas1"></canvas>
-    <canvas ref="canvas2"></canvas>
-    <canvas ref="canvas3"></canvas>
+    <Row>
+      <Col span="12">
+        <canvas ref="canvas1"></canvas>
+      </Col>
+      <Col span="12">
+        <canvas ref="canvas2"></canvas>
+      </Col>
+    </Row>
+    <br>
+    <Row>
+      <Col span="12">
+        <canvas ref="canvas3"></canvas>
+      </Col>
+      <Col span="12">
+        <canvas ref="canvas4"></canvas>
+      </Col>
+    </Row>
   </div>
 </template>
 
@@ -11,6 +25,8 @@ import Chart from 'chart.js'
 import ChartDatasourcePrometheusPlugin from 'chartjs-plugin-datasource-prometheus'
 Chart.plugins.register(ChartDatasourcePrometheusPlugin);
 
+
+
 export default {
   name: 'home',
   components: {
@@ -18,12 +34,26 @@ export default {
   data () {
     return {}
   },
+  methods: {},
   mounted () {
     console.log(this.$refs)
     const myChart1 = new Chart(this.$refs['canvas1'].getContext('2d'), {
       type: 'line',
       plugins: [ChartDatasourcePrometheusPlugin],
       options: {
+        title: {
+          display: true,
+          text: 'Feed click rate'
+        },
+        legend: {
+          display: true,
+          position: 'right',
+          labels: {
+            generateLabels: (chart) => {
+              return [];
+            }
+          }
+        },
         plugins: {
           'datasource-prometheus': {
             prometheus: {
@@ -44,6 +74,19 @@ export default {
       type: 'line',
       plugins: [ChartDatasourcePrometheusPlugin],
       options: {
+        title: {
+          display: true,
+          text: 'Response status'
+        },
+        legend: {
+          display: true,
+          position: 'right',
+          labels: {
+            generateLabels: (chart) => {
+              return [];
+            }
+          }
+        },
         plugins: {
           'datasource-prometheus': {
             prometheus: {
@@ -64,6 +107,19 @@ export default {
       type: 'line',
       plugins: [ChartDatasourcePrometheusPlugin],
       options: {
+        title: {
+          display: true,
+          text: 'Requests click increase'
+        },
+        legend: {
+          display: true,
+          position: 'right',
+          labels: {
+            generateLabels: (chart) => {
+              return [];
+            }
+          }
+        },
         plugins: {
           'datasource-prometheus': {
             prometheus: {
@@ -84,6 +140,19 @@ export default {
       type: 'line',
       plugins: [ChartDatasourcePrometheusPlugin],
       options: {
+        title: {
+          display: true,
+          text: 'Requests feed increase'
+        },
+        legend: {
+          display: true,
+          position: 'right',
+          labels: {
+            generateLabels: (chart) => {
+              return [];
+            }
+          }
+        },
         plugins: {
           'datasource-prometheus': {
             prometheus: {
