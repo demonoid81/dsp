@@ -38,6 +38,7 @@ func (app *app) RebuldStat(ctx context.Context) error {
 		var elem LinkData
 		err := cur.Decode(&elem)
 		if err != nil {
+			fmt.Println("cur.Decode(&elem)")
 			return err
 		}
 		filter := bson.M{
@@ -70,6 +71,7 @@ func (app *app) RebuldStat(ctx context.Context) error {
 				}
 				fmt.Println(result)
 			} else {
+				fmt.Println("Decode(data)")
 				return err
 			}
 			if elem.Click {
