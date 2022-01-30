@@ -81,11 +81,11 @@ func (app *app) RebuldStat(ctx context.Context) error {
 					"clicks":   data.Clicks,
 				},
 			}
-			if err := statCollection.FindOneAndUpdate(ctx, filter, update).Decode(&data); err != nil {
-				if err != mongo.ErrNoDocuments {
-					return err
-				}
+			result, err := statCollection.UpdateOne(ctx, filter, update)
+			if err != nil {
+				return err
 			}
+			fmt.Printf("Updated %v Documents!\n", result.ModifiedCount)
 		}
 
 	}
