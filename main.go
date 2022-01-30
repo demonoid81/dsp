@@ -162,11 +162,13 @@ func main() {
 		return
 	}
 
-	//err = App.uploadSSP(ctx)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
+	err = App.RebuldStat(ctx)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	return
 
 	err = App.loadSSP(ctx)
 	if err != nil {

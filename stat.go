@@ -7,9 +7,90 @@ import (
 	"github.com/demonoid81/dsp/config"
 	"github.com/demonoid81/dsp/json2table"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"time"
 )
+
+type LData struct {
+	Country string `json:"cou" bson:"country"`
+	Browser string `json:"bro" bson:"browser"`
+	Os      string `json:"os" bson:"os"`
+	Sid     string `json:"sid" bson:"sid"`
+	Date    string `json:"date" bson:"date"`
+	FeedId  string `json:"feed_id" bson:"feed_id"`
+	ReqFeed int64  `json:"req_feed" bson:"req_feed"`
+	Clicks  int64  `json:"clicks" bson:"clicks"`
+}
+
+func (app *app) RebuldStat(ctx context.Context) error {
+	statCollection := app.mongoClient.Database(config.Config["mongo_database"].(string)).Collection("statistics")
+	requestsCollection := app.mongoClient.Database(config.Config["mongo_database"].(string)).Collection("requests")
+
+	cur, err := requestsCollection.Find(ctx, bson.D{{}})
+	if err != nil {
+		return err
+	}
+	defer cur.Close(ctx)
+
+	for cur.Next(ctx) {
+		//Create a value into which the single document can be decoded
+		var elem LinkData
+		err := cur.Decode(&elem)
+		if err != nil {
+			return err
+		}
+		filter := bson.M{
+			"date":    bson.M{"$eq": elem.Date},
+			"feed_id": bson.M{"$eq": elem.FeedId},
+			"country": bson.M{"$eq": elem.Cou},
+			"browser": bson.M{"$eq": elem.Bro},
+			"os":      bson.M{"$eq": elem.Os},
+			"sid":     bson.M{"$eq": elem.Sid},
+		}
+		var data LData
+		if err := statCollection.FindOne(ctx, filter).Decode(data); err != nil {
+			if err == mongo.ErrNoDocuments {
+				data := LData{
+					Country: elem.Cou,
+					Browser: elem.Bro,
+					Os:      elem.Os,
+					Sid:     elem.Sid,
+					Date:    elem.Date,
+					FeedId:  elem.FeedId,
+					ReqFeed: 1,
+					Clicks:  0,
+				}
+				if elem.Click {
+					data.Clicks = 1
+				}
+				result, err := statCollection.InsertOne(ctx, data)
+				if err != nil {
+					return err
+				}
+				fmt.Println(result)
+			} else {
+				return err
+			}
+			if elem.Click {
+				data.Clicks = data.Clicks + 1
+			}
+			update := bson.M{
+				"$set": bson.M{
+					"req_feed": data.ReqFeed + 1,
+					"clicks":   data.Clicks,
+				},
+			}
+			if err := statCollection.FindOneAndUpdate(ctx, filter, update).Decode(&data); err != nil {
+				if err != mongo.ErrNoDocuments {
+					return err
+				}
+			}
+		}
+
+	}
+	return nil
+}
 
 func (app *app) stat(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
