@@ -655,7 +655,7 @@ func updateReq(ctx context.Context, data LData, waitGroup *sync.WaitGroup, clien
 			return
 		}
 	}
-	data.Clicks = data.Clicks + 1
+	ldata.Clicks = ldata.Clicks + 1
 	update := bson.M{
 		"$set": bson.M{
 			"clicks": ldata.Clicks,
