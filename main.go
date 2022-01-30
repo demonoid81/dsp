@@ -515,10 +515,16 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 
 			jsonKafka, _ := json.Marshal(data)
 
-			if key, ok := data["uuid"]; ok {
-				waitGroup.Add(1)
-				go updateReq(ctx, key.(string), waitGroup, mongoClient)
+			waitGroup.Add(1)
+			ldata := LData{
+				Country: data["cou"].(string),
+				Browser: data["bro"].(string),
+				Os:      data["os"].(string),
+				Sid:     data["cid"].(string),
+				Date:    data["date"].(string),
+				FeedId:  data["feed_id"].(string),
 			}
+			go updateReq(ctx, ldata, waitGroup, mongoClient)
 
 			totalRequestsByFeed.WithLabelValues("click", data["feed_id"].(string)).Inc()
 			totalRequestsBySID.WithLabelValues("click", data["sid"].(string)).Inc()
@@ -565,30 +571,94 @@ func clickdsp(ctx context.Context) http.HandlerFunc {
 
 func addReq(ctx context.Context, data LinkData, waitGroup *sync.WaitGroup, client *mongo.Client) {
 	defer waitGroup.Done()
-	collection := client.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
-	result, err := collection.InsertOne(ctx, data)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(result)
-}
 
-func updateReq(ctx context.Context, key string, waitGroup *sync.WaitGroup, client *mongo.Client) {
-	defer waitGroup.Done()
-	collection := client.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
+	statCollection := client.Database(config.Config["mongo_database"].(string)).Collection("statistics")
 	filter := bson.M{
-		"uuid": bson.M{
-			"$eq": key, // check if bool field has value of 'false'
-		},
+		"date":    bson.M{"$eq": data.Date},
+		"feed_id": bson.M{"$eq": data.FeedId},
+		"country": bson.M{"$eq": data.Cou},
+		"browser": bson.M{"$eq": data.Bro},
+		"os":      bson.M{"$eq": data.Os},
+		"sid":     bson.M{"$eq": data.Sid},
+	}
+	var ldata LData
+	if err := statCollection.FindOne(ctx, filter).Decode(&ldata); err != nil {
+		if err == mongo.ErrNoDocuments {
+			data := LData{
+				Country: data.Cou,
+				Browser: data.Bro,
+				Os:      data.Os,
+				Sid:     data.Sid,
+				Date:    data.Date,
+				FeedId:  data.FeedId,
+				ReqFeed: 1,
+				Clicks:  0,
+			}
+			result, err := statCollection.InsertOne(ctx, data)
+			if err != nil {
+				return
+			}
+			fmt.Println(result)
+		} else {
+			fmt.Println("Decode(data)")
+			return
+		}
 	}
 	update := bson.M{
 		"$set": bson.M{
-			"click": true,
+			"req_feed": ldata.ReqFeed + 1,
 		},
 	}
-	result, err := collection.UpdateOne(ctx, filter, update)
+	result, err := statCollection.UpdateOne(ctx, filter, update)
 	if err != nil {
-		fmt.Println(err)
+		return
 	}
-	fmt.Println(result)
+	fmt.Printf("Updated %v Documents!\n", result.ModifiedCount)
+}
+
+func updateReq(ctx context.Context, data LData, waitGroup *sync.WaitGroup, client *mongo.Client) {
+	defer waitGroup.Done()
+	statCollection := client.Database(config.Config["mongo_database"].(string)).Collection("statistics")
+	filter := bson.M{
+		"date":    bson.M{"$eq": data.Date},
+		"feed_id": bson.M{"$eq": data.FeedId},
+		"country": bson.M{"$eq": data.Country},
+		"browser": bson.M{"$eq": data.Browser},
+		"os":      bson.M{"$eq": data.Os},
+		"sid":     bson.M{"$eq": data.Sid},
+	}
+	var ldata LData
+	if err := statCollection.FindOne(ctx, filter).Decode(&ldata); err != nil {
+		if err == mongo.ErrNoDocuments {
+			data := LData{
+				Country: data.Country,
+				Browser: data.Browser,
+				Os:      data.Os,
+				Sid:     data.Sid,
+				Date:    data.Date,
+				FeedId:  data.FeedId,
+				ReqFeed: 1,
+				Clicks:  1,
+			}
+			result, err := statCollection.InsertOne(ctx, data)
+			if err != nil {
+				return
+			}
+			fmt.Println(result)
+		} else {
+			fmt.Println("Decode(data)")
+			return
+		}
+	}
+	data.Clicks = data.Clicks + 1
+	update := bson.M{
+		"$set": bson.M{
+			"clicks": ldata.Clicks,
+		},
+	}
+	result, err := statCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return
+	}
+	fmt.Printf("Updated %v Documents!\n", result.ModifiedCount)
 }

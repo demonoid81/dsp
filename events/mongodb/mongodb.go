@@ -23,15 +23,7 @@ func NewClient() (*mongo.Client, error) {
 }
 
 
-func AddReq(ctx context.Context, data interface{}, waitGroup *sync.WaitGroup, client *mongo.Client) {
-	defer waitGroup.Done()
-	collection := client.Database(config.Config["mongo_database"].(string)).Collection(config.Config["mongo_collection"].(string))
-	result, err := collection.InsertOne(ctx, data)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(result)
-}
+
 
 func UpdateReqSetClick(ctx context.Context, key string, waitGroup *sync.WaitGroup, client *mongo.Client) {
 	defer waitGroup.Done()

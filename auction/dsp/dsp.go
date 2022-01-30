@@ -8,12 +8,12 @@ import (
 	"github.com/demonoid81/dsp/config"
 	"github.com/demonoid81/dsp/events/encrypt"
 	"github.com/demonoid81/dsp/events/inArray"
-	"github.com/demonoid81/dsp/events/mongodb"
 	"github.com/demonoid81/dsp/events/postgres"
 	"github.com/demonoid81/dsp/events/redis"
 	ts "github.com/demonoid81/dsp/events/timestamp"
 	"github.com/demonoid81/dsp/events/utils"
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"math/rand"
 	"sort"
@@ -22,6 +22,17 @@ import (
 	"sync"
 	"time"
 )
+
+type LData struct {
+	Country string `json:"cou" bson:"country"`
+	Browser string `json:"bro" bson:"browser"`
+	Os      string `json:"os" bson:"os"`
+	Sid     string `json:"sid" bson:"sid"`
+	Date    string `json:"date" bson:"date"`
+	FeedId  string `json:"feed_id" bson:"feed_id"`
+	ReqFeed int64  `json:"req_feed" bson:"req_feed"`
+	Clicks  int64  `json:"clicks" bson:"clicks"`
+}
 
 type DSPCfg struct {
 	ID       int    `json:"id"`
@@ -381,7 +392,7 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 		link = config.Config["Click_Url"].(string) + "/click?data=" + link
 
 		waitGroup.Add(1)
-		go mongodb.AddReq(ctx, linkData, waitGroup, mongoClient)
+		go AddReq(ctx, linkData, waitGroup, mongoClient)
 
 		cpc := _creative.Cpr - (_creative.Cpr * config.Config["revshare"].(float64) / 100)
 
@@ -411,4 +422,50 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 			SSPName: cfg.SSPName,
 		}
 	}
+}
+
+func AddReq(ctx context.Context, data LinkData, waitGroup *sync.WaitGroup, client *mongo.Client) {
+	defer waitGroup.Done()
+	statCollection := client.Database(config.Config["mongo_database"].(string)).Collection("statistics")
+	filter := bson.M{
+		"date":    bson.M{"$eq": data.Date},
+		"feed_id": bson.M{"$eq": data.FeedId},
+		"country": bson.M{"$eq": data.Cou},
+		"browser": bson.M{"$eq": data.Bro},
+		"os":      bson.M{"$eq": data.Os},
+		"sid":     bson.M{"$eq": data.Sid},
+	}
+	var ldata LData
+	if err := statCollection.FindOne(ctx, filter).Decode(&ldata); err != nil {
+		if err == mongo.ErrNoDocuments {
+			data := LData{
+				Country: data.Cou,
+				Browser: data.Bro,
+				Os:      data.Os,
+				Sid:     data.Sid,
+				Date:    data.Date,
+				FeedId:  data.FeedId,
+				ReqFeed: 1,
+				Clicks:  0,
+			}
+			result, err := statCollection.InsertOne(ctx, data)
+			if err != nil {
+				return
+			}
+			fmt.Println(result)
+		} else {
+			fmt.Println("Decode(data)")
+			return
+		}
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"req_feed": ldata.ReqFeed + 1,
+		},
+	}
+	result, err := statCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return
+	}
+	fmt.Printf("Updated %v Documents!\n", result.ModifiedCount)
 }
