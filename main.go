@@ -162,14 +162,6 @@ func main() {
 		return
 	}
 
-	go func (){
-		err = App.RebuldStat(ctx)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-	}()
-
 	err = App.loadSSP(ctx)
 	if err != nil {
 		fmt.Println(err)
@@ -523,7 +515,6 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 				Sid:     data["sid"].(string),
 				Date:    data["date"].(string),
 				FeedId:  data["feed_id"].(string),
-				CPC: data["cpc"].float64(),
 			}
 
 			fmt.Println(ldata)
