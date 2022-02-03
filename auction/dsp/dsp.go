@@ -32,6 +32,7 @@ type LData struct {
 	FeedId  string `json:"feed_id" bson:"feed_id"`
 	ReqFeed int64  `json:"req_feed" bson:"req_feed"`
 	Clicks  int64  `json:"clicks" bson:"clicks"`
+	CPC float64 `json:"cpc" bson:"cpc"`
 }
 
 type DSPCfg struct {

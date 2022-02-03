@@ -58,10 +58,12 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 		if creative.Status == 200 {
 
 			w.Header().Set("Token", dataBase64)
-
+			fmt.Println(creative.SSPID)
 			if creative.SSPID == 124 {
 				redisKey := fmt.Sprintf("%d_%s_%s", creative.SSPID, r.FormValue("ip"), r.FormValue("ua"))
+				fmt.Println(redisKey)
 				unicaleReq := redis.Get(rdb, redisKey)
+				fmt.Println(unicaleReq)
 				if unicaleReq == "error" {
 					set := redis.Set(rdb, redisKey, "1")
 					if set == "error" {

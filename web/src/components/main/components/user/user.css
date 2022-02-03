@@ -1,0 +1,9 @@
+.user-avatar-dropdown {
+  cursor: pointer;
+  display: inline-block;
+  vertical-align: middle;
+}
+.user-avatar-dropdown .ivu-badge-dot {
+  top: 16px;
+}
+/*# sourceMappingURL=user.css.map */
