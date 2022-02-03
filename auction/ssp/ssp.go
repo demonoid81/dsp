@@ -2,6 +2,8 @@ package ssp
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/demonoid81/dsp/auction/dsp"
@@ -16,6 +18,12 @@ import (
 	"strconv"
 	"sync"
 )
+
+func MD5(text string) string {
+	algorithm := md5.New()
+	algorithm.Write([]byte(text))
+	return hex.EncodeToString(algorithm.Sum(nil))
+}
 
 func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client, counter *prometheus.CounterVec, counterSID *prometheus.CounterVec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +68,7 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 			w.Header().Set("Token", dataBase64)
 			fmt.Println(creative.SSPID)
 			if creative.SSPID == 124 {
-				redisKey := fmt.Sprintf("%d_%s_%s", creative.SSPID, r.FormValue("ip"), r.FormValue("ua"))
+				redisKey := MD5(fmt.Sprintf("%d %s %s", creative.SSPID, r.FormValue("ip"), r.FormValue("ua")))
 				fmt.Println(redisKey)
 				unicaleReq := redis.Get(rdb, redisKey)
 				fmt.Println(unicaleReq)

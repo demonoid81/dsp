@@ -523,6 +523,7 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 				Sid:     data["sid"].(string),
 				Date:    data["date"].(string),
 				FeedId:  data["feed_id"].(string),
+				CPC: data["cpc"].float64(),
 			}
 
 			fmt.Println(ldata)
