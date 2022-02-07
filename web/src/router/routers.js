@@ -61,13 +61,32 @@ export default [
         },
         children: [
             {
-                path: 'dsp',
+                path: '',
                 name: 'dsp',
                 meta: {
                     icon: '_qq',
                     title: 'DSP'
                 },
-                component: () => import('view/dsp/sspTable.vue')
+                component: () => import('view/dsp/dsp.vue')
+            }
+        ]
+    },
+    {
+        path: '/ssp',
+        name: '_ssp',
+        component: () => import('components/main'),
+        meta: {
+            hideInBread: true
+        },
+        children: [
+            {
+                path: '',
+                name: 'ssp',
+                meta: {
+                    icon: '_qq',
+                    title: 'SSP'
+                },
+                component: () => import('view/ssp/ssp.vue')
             }
         ]
     },

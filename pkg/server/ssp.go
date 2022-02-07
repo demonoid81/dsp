@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/demonoid81/dsp/auction/dsp"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 )
 
@@ -87,28 +88,28 @@ func (s *Server) getSSP(ctx context.Context) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 	}
 }
-//
-//func (s *Server) addSSP(ctx context.Context, client *mongo.Client) http.HandlerFunc {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		var ssp dsp.SSP
-//		err := json.NewDecoder(r.Body).Decode(&ssp)
-//		if err != nil {
-//			http.Error(w, err.Error(), http.StatusBadRequest)
-//			return
-//		}
-//		fmt.Println(ssp)
-//		collection := s.mongo.MongoClient.Database(s.cfg.MongoDatabase).Collection("ssp")
-//		_, err = collection.InsertOne(ctx, ssp)
-//		if err != nil {
-//			http.Error(w, err.Error(), http.StatusBadRequest)
-//			return
-//		}
-//		w.WriteHeader(http.StatusOK)
-//	}
-//}
-//
-//func reload(ctx context.Context, client *mongo.Client) http.HandlerFunc {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		w.WriteHeader(http.StatusOK)
-//	}
-//}
+
+func (s *Server) addSSP(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var ssp dsp.SSP
+		err := json.NewDecoder(r.Body).Decode(&ssp)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		fmt.Println(ssp)
+		collection := s.mongo.MongoClient.Database(s.cfg.MongoDatabase).Collection("ssp")
+		_, err = collection.InsertOne(ctx, ssp)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func reload(ctx context.Context, client *mongo.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}
+}

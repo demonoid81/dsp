@@ -5,6 +5,8 @@ import user from './modules/user'
 import app from './modules/app'
 import libs from "./modules/libs";
 import campaigns from "./modules/campaigns"
+import dsp from "./modules/dsp";
+import ssp from "./modules/ssp";
 
 Vue.use(Vuex)
 
@@ -14,6 +16,8 @@ export default new Vuex.Store({
         user: user,
         app: app,
         libs: libs,
-        campaigns: campaigns
+        campaigns: campaigns,
+        dsp: dsp,
+        ssp: ssp,
     }
 })

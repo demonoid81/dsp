@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-
-
 func (s *Server) stat(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		startDate, err := time.Parse("2006-01-02", r.FormValue("start"))
@@ -26,68 +24,59 @@ func (s *Server) stat(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		feedID := r.FormValue("feed_id")
+		filter := r.FormValue("filter")
 
 		type status struct {
-			Date  string  `json:"date"`
-			Shows int64   `json:"shows"`
-			Click int64   `json:"click"`
-			Rate  float64 `json:"rate"`
-			CPC   float64 `json:"cpc"`
-			CTR   float64 `json:"ctr"`
+			Metrica string  `json:"metrica" bson:"metrica"`
+			ReqFeed int64   `json:"req_feed" bson:"req_feed"`
+			Clicks  int64   `json:"clicks" bson:"clicks"`
+			Rate    float64 `json:"rate" bson:"rate"`
+			CPC     float64 `json:"cpc" bson:"cpc"`
+			CTR     float64 `json:"ctr" bson:"ctr"`
 		}
 
 		days := endDate.Sub(startDate).Hours() / 24
-		fmt.Println(days)
 		var statuses []status
-		collection := s.mongo.MongoClient.Database(s.cfg.MongoDatabase).Collection("requests")
+
+		collection := s.mongo.MongoClient.Database(s.cfg.MongoDatabase).Collection("statistics")
+
+		var dates []string
 		for i := 0; i <= int(days); i++ {
-
 			date := startDate.Add(time.Hour * 24 * time.Duration(i)).Format("2006-01-02")
+			dates = append(dates, date)
+		}
 
-			fmt.Println(date)
-
-			filter := bson.M{
+		matchStage := bson.M{
+			"$match": bson.M{
 				"date": bson.M{
-					"$eq": date, // check if bool field has value of 'false'
+					"$in": dates,
+				}}}
+		groupStage := bson.M{
+			"$group": bson.M{
+				"_id": fmt.Sprintf("$%s", filter),
+				"total_click": bson.M{
+					"$sum": "$clicks",
 				},
-			}
-			if feedID != "" {
-				filter = bson.M{
-					"date":    bson.M{"$eq": date},
-					"feed_id": bson.M{"$eq": feedID},
-				}
-			}
+				"total_req_feed": bson.M{
+					"$sum": "$req_feed",
+				},
+			},
+		}
+		projectStage := bson.M{
+			"$project": bson.M{
+				"metrica":  "$_id",
+				"clicks":   "$total_click",
+				"req_feed": "$total_req_feed",
+			},
+		}
 
-			shows, err := collection.CountDocuments(ctx, filter)
-			if err != nil {
-				w.WriteHeader(503)
-			}
+		cursor, err := collection.Aggregate(ctx, []bson.M{matchStage, groupStage, projectStage})
+		if err != nil {
+			panic(err)
+		}
 
-			filter = bson.M{
-				"date":  bson.M{"$eq": date},
-				"click": bson.M{"$eq": true},
-			}
-			if feedID != "" {
-				filter = bson.M{
-					"date":    bson.M{"$eq": date},
-					"click":   bson.M{"$eq": true},
-					"feed_id": bson.M{"$eq": feedID},
-				}
-			}
-
-			clicks, err := collection.CountDocuments(ctx, filter)
-			if err != nil {
-				w.WriteHeader(503)
-			}
-
-			curStat := status{
-				Date:  date,
-				Shows: shows,
-				Click: clicks,
-			}
-
-			statuses = append(statuses, curStat)
+		if err = cursor.All(ctx, &statuses); err != nil {
+			w.WriteHeader(503)
 		}
 
 		data, err := json.Marshal(statuses)

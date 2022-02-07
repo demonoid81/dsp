@@ -96,6 +96,12 @@ func HTTPServer(app *app.Env) {
 	//	return
 	//}
 
+	//err := server.loadSSP(ctx)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+
 	server.getCampaign(ctx)
 
 	router := mux.NewRouter()
@@ -123,14 +129,14 @@ func HTTPServer(app *app.Env) {
 	//
 	apiRouter.Path("/stat").Handler(server.stat(ctx))
 	//
-	apiRouter.Path("/ssp/get").Handler(server.getSSP(ctx))
+	apiRouter.Path("/ssp").Methods("GET").Handler(server.getSSP(ctx))
 	//
-	//router.Path("/ssp/add").Handler(server.addSSP(ctx, mongoClient))
+	apiRouter.Path("/ssp/add").Handler(server.addSSP(ctx))
 	//router.Path("/ssp/update").Handler(server.addSSP(ctx, mongoClient))
 	//router.Path("/ssp/reload").Handler(App.reloadSSP(ctx))
 	//
-	//router.Path("/dsp/get").Handler(App.getDSP(ctx))
-	//router.Path("/dsp/add").Methods("POST").Handler(App.addDSP(ctx))
+	apiRouter.Path("/dsp").Methods("GET").Handler(server.getDSP(ctx))
+	apiRouter.Path("/dsp/add").Methods("POST").Handler(server.addDSP(ctx))
 	//router.Path("/dsp/update").Methods("POST").Handler(App.updateDSP(ctx))
 	//
 	ui := web.UIHandler{StaticFS: web.StaticFiles, StaticPath: "dist", IndexPath: "index.html"}
