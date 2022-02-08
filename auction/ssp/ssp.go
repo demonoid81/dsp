@@ -9,7 +9,6 @@ import (
 	"github.com/demonoid81/dsp/auction/dsp"
 	"github.com/demonoid81/dsp/config"
 	"github.com/demonoid81/dsp/events/encrypt"
-	"github.com/demonoid81/dsp/events/redis"
 	"github.com/demonoid81/dsp/events/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -28,8 +27,6 @@ func MD5(text string) string {
 func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client, counter *prometheus.CounterVec, counterSID *prometheus.CounterVec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-
-		rdb := redis.Client()
 
 		sspKey := r.FormValue("key")
 
