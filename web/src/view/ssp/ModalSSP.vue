@@ -102,7 +102,7 @@ export default {
     return {}
   },
   methods: {
-    ...mapMutations('dsp', [
+    ...mapMutations('ssp', [
       'clearCurSSP',
       'setCurSSPItem',
       'addDPSInCurSSP',

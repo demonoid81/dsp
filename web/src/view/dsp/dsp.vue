@@ -11,7 +11,7 @@
       <Table :columns="columns" :data="dsp" border no-data-text="No data">
         <template slot="action" slot-scope="{ row, index }">
           <Button size="small" style="margin-right: 5px" type="primary" @click="show(index)">View</Button>
-          <Button size="small" type="error" @click="remove(index)">Delete</Button>
+          <Button size="small" type="error" @click="remove(row.id)">Delete</Button>
         </template>
       </Table>
     </div>
@@ -23,7 +23,7 @@
 <script>
 import axios from 'axios';
 import ModalDSP from "./ModalDSP";
-import {mapGetters, mapMutations} from "vuex";
+import {mapActions, mapGetters, mapMutations} from "vuex";
 
 export default {
   components: {ModalDSP},
@@ -68,6 +68,9 @@ export default {
         'setDSPItem',
         'clearDSPItem'
     ]),
+    ...mapActions('dsp',[
+        'deleteDSP'
+    ]),
     show(index) {
       this.setDSPItem(this.dsp[index])
       this.showModal = true
@@ -78,19 +81,19 @@ export default {
     },
     saveHandler() {
       console.log("save")
+      this.showModal = false
+    },
+    remove(id) {
+      this.deleteDSP(id)
     }
   },
   computed: {
     ...mapGetters('dsp', [
       'dsp',
     ]),
-    dspData: function () {
-      return []
-
-    }
   },
   mounted() {
-      this.$store.dispatch('dsp/getDSP')
+    this.$store.dispatch('dsp/getDSP')
   }
 }
 </script>

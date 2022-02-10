@@ -77,13 +77,6 @@ export default {
       this.viewSSPModal = true
       this.readOnly = false
     },
-    saveDSP() {
-      axios.post(window.location.origin + 'api/dsp/add', this.dspItem)
-          .then()
-          .catch(error => {
-            console.error("There was an error!", error);
-          });
-    },
     saveSSP() {
       axios.post(window.location.origin + 'api/ssp/add', this.dspItem)
           .then()

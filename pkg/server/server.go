@@ -136,16 +136,17 @@ func HTTPServer(app *app.Env) {
 	//router.Path("/ssp/reload").Handler(App.reloadSSP(ctx))
 	//
 	apiRouter.Path("/dsp").Methods("GET").Handler(server.getDSP(ctx))
-	apiRouter.Path("/dsp/add").Methods("POST").Handler(server.addDSP(ctx))
-	//router.Path("/dsp/update").Methods("POST").Handler(App.updateDSP(ctx))
+	apiRouter.Path("/dsp").Methods("POST").Handler(server.addDSP(ctx))
+	apiRouter.Path("/dsp").Methods("DELETE").Handler(server.deleteDSP(ctx))
+
 	//
 	ui := web.UIHandler{StaticFS: web.StaticFiles, StaticPath: "dist", IndexPath: "index.html"}
 	router.PathPrefix("/").Handler(ui)
 
 	corsHandler := cors.Default().Handler(router)
 
-	fmt.Println("Serving requests on port 9099")
-	err = http.ListenAndServe(":9099", corsHandler)
+	fmt.Println("Serving requests on port 9999")
+	err = http.ListenAndServe(":9999", corsHandler)
 	fmt.Println(err)
 }
 

@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import {mapGetters} from "vuex";
+import {mapGetters, mapMutations, mapActions} from "vuex";
 
 export default {
   name: 'ModalDSP',
@@ -42,15 +42,25 @@ export default {
     show: {},
   },
   methods: {
+    ...mapMutations('dsp', [
+      'clearDSPItem',
+      'setDSPItemField',
+    ]),
+    ...mapActions('dsp', [
+        'setDSP'
+    ]),
     saveEvent() {
+      this.setDSP()
       this.$emit('save')
     },
     closeEvent() {
+      this.clearDSPItem()
       this.$emit('close')
     }
   },
   computed: {
     ...mapGetters('dsp', [
+        'dsp',
       'dspItem',
     ]),
     dspID: {
@@ -59,7 +69,7 @@ export default {
           let max = this.dsp.reduce(function (prev, current) {
             return (prev.id > current.id) ? prev : current
           })
-          this.setCurSSPItem({
+          this.setDSPItemField({
             value: max.id + 1,
             name: 'id'
           })
@@ -67,7 +77,7 @@ export default {
         return this.dspItem.id
       },
       set: function (value) {
-        this.setCurSSPItem({
+        this.setDSPItemField({
           value,
           name: 'id'
         })
