@@ -31,6 +31,9 @@ const mutations = {
     addDPSInCurSSP(state) {
         state.sspItem.dsp.push({})
     },
+    deleteSSP (state, id) {
+        state.dsp = state.ssp.filter(item => item.ssp_id!== id)
+    },
     removeDSPinCurSSP(state, index) {
         state.sspItem.dsp = state.sspItem.dsp.filter((_, i) => {
             return i !== index
