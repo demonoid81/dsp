@@ -171,6 +171,13 @@ func main() {
 		return
 	}
 
+	go func() {
+		err = App.RebuldStat(ctx)
+		if err != nil {
+			fmt.Println(err)
+		return
+	}}()
+
 	err = App.loadSSP(ctx)
 	if err != nil {
 		fmt.Println(err)

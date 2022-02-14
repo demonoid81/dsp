@@ -7,7 +7,6 @@ import (
 	"github.com/demonoid81/dsp/config"
 	"github.com/demonoid81/dsp/json2table"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"time"
 )
@@ -21,7 +20,7 @@ type LData struct {
 	FeedId  string `json:"feed_id" bson:"feed_id"`
 	ReqFeed int64  `json:"req_feed" bson:"req_feed"`
 	Clicks  int64  `json:"clicks" bson:"clicks"`
-	CPC    float64  `json:"cpc" bson:"cpc"`
+	Rate float64  `json:"rate" bson:"rate"`
 }
 
 
@@ -54,37 +53,13 @@ func (app *app) RebuldStat(ctx context.Context) error {
 		}
 		var data LData
 		if err := statCollection.FindOne(ctx, filter).Decode(&data); err != nil {
-			if err == mongo.ErrNoDocuments {
-				data := LData{
-					Country: elem.Cou,
-					Browser: elem.Bro,
-					Os:      elem.Os,
-					Sid:     elem.Sid,
-					Date:    elem.Date,
-					FeedId:  elem.FeedId,
-					ReqFeed: 1,
-					Clicks:  0,
-				}
-				if elem.Click {
-					data.Clicks = 1
-				}
-				result, err := statCollection.InsertOne(ctx, data)
-				if err != nil {
-					return err
-				}
-				fmt.Println(result)
-			} else {
-				fmt.Println("Decode(data)")
-				return err
-			}
+			fmt.Println("Decode(data)")
+			return err
 		}
-		if elem.Click {
-			data.Clicks = data.Clicks + 1
-		}
+		data.Rate = data.Rate + elem.Cpc
 		update := bson.M{
 			"$set": bson.M{
-				"req_feed": data.ReqFeed + 1,
-				"clicks":   data.Clicks,
+				"rate":   data.Rate,
 			},
 		}
 		result, err := statCollection.UpdateOne(ctx, filter, update)
