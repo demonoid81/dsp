@@ -1,7 +1,9 @@
 <template>
   <div>
     <DatePicker type="daterange" :options="options" format="yyyy-MM-dd" placement="bottom-start"
-                placeholder="Select date" style="width: 200px" :value="date"></DatePicker>
+                placeholder="Select date" style="width: 200px" :value="date"
+                @on-change="changeData($event)"
+    ></DatePicker>
     <Button type="primary" @click="getStat">Show</Button>
     <br/>
     <br/>
@@ -61,12 +63,12 @@ export default {
         },
         {
           title: 'CTR, %',
-          key: 'key',
+          key: 'ctr',
           sortable: true
         },
         {
           title: 'CPC, $',
-          key: 'key',
+          key: 'cpc',
           sortable: true
         },
         {
@@ -112,6 +114,10 @@ export default {
     }
   },
   methods: {
+    changeData(e) {
+      this.date[0] = e[0]
+      this.date[1] = e[1]
+    },
     getStat() {
       axios
           .get(window.location.origin + '/api/stat', {
@@ -121,7 +127,16 @@ export default {
               filter: this.filter
             }
           })
-          .then(response => (this.data = response.data))
+          .then(response => (this.data = response.data.map( item => {
+            return {
+              ...item,
+              rate: Math.ceil(item.rate*10000)/10000,
+              cpc: Math.ceil((item.rate/item.clicks)*10000)/10000,
+              ctr: Math.ceil((item.clicks/item.req_feed)*10000)/10000,
+            }
+              }
+
+          )))
     }
   },
   mounted() {

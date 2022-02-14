@@ -25,16 +25,16 @@ module.exports = merge(common, {
         port: 8080,
         proxy: {
             '/ssp': {
-                target: 'http://localhost:9099',
+                target: 'http://localhost:9999',
             },
             '/dsp': {
-                target: 'http://localhost:9099',
+                target: 'http://localhost:9999',
             },
             '/auth': {
-                target: 'http://localhost:9099',
+                target: 'http://localhost:9999',
             },
             '/api': {
-                target: 'http://localhost:9099',
+                target: 'http://localhost:9999',
             },
         }
     },

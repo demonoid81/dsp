@@ -60,6 +60,9 @@ func (s *Server) stat(ctx context.Context) http.HandlerFunc {
 				"total_req_feed": bson.M{
 					"$sum": "$req_feed",
 				},
+				"total_rate": bson.M{
+					"$sum": "$rate",
+				},
 			},
 		}
 		projectStage := bson.M{
@@ -67,6 +70,7 @@ func (s *Server) stat(ctx context.Context) http.HandlerFunc {
 				"metrica":  "$_id",
 				"clicks":   "$total_click",
 				"req_feed": "$total_req_feed",
+				"rate":     "$total_rate",
 			},
 		}
 
