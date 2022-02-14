@@ -9,9 +9,9 @@ import (
 	"github.com/demonoid81/dsp/events/encrypt"
 	"github.com/demonoid81/dsp/events/inArray"
 	"github.com/demonoid81/dsp/events/postgres"
-	"github.com/demonoid81/dsp/events/redis"
 	ts "github.com/demonoid81/dsp/events/timestamp"
 	"github.com/demonoid81/dsp/events/utils"
+	"github.com/dgraph-io/ristretto"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,15 +24,15 @@ import (
 )
 
 type LData struct {
-	Country string `json:"cou" bson:"country"`
-	Browser string `json:"bro" bson:"browser"`
-	Os      string `json:"os" bson:"os"`
-	Sid     string `json:"sid" bson:"sid"`
-	Date    string `json:"date" bson:"date"`
-	FeedId  string `json:"feed_id" bson:"feed_id"`
-	ReqFeed int64  `json:"req_feed" bson:"req_feed"`
-	Clicks  int64  `json:"clicks" bson:"clicks"`
-	CPC float64 `json:"cpc" bson:"cpc"`
+	Country string  `json:"cou" bson:"country"`
+	Browser string  `json:"bro" bson:"browser"`
+	Os      string  `json:"os" bson:"os"`
+	Sid     string  `json:"sid" bson:"sid"`
+	Date    string  `json:"date" bson:"date"`
+	FeedId  string  `json:"feed_id" bson:"feed_id"`
+	ReqFeed int64   `json:"req_feed" bson:"req_feed"`
+	Clicks  int64   `json:"clicks" bson:"clicks"`
+	CPC     float64 `json:"cpc" bson:"cpc"`
 }
 
 type DSPCfg struct {
@@ -85,10 +85,10 @@ type Creative struct {
 	SSPID       int     `json:"ssp_id"`
 	SSPName     string  `json:"ssp_name"`
 	Timestamp   int     `json:"timestamp"`
-	SID			string `json:"-"`
+	SID         string  `json:"-"`
 }
 
-var Affiliates = map[string]func(ctx context.Context, data ReqData, config DataDSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) Creative{
+var Affiliates = map[string]func(ctx context.Context, data ReqData, config DataDSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client, cache *ristretto.Cache) Creative{
 	"labyrinthads": Get,
 }
 
@@ -189,7 +189,7 @@ type LinkData struct {
 	Click  bool    `json:"-" bson:"click"`
 }
 
-func Event(ctx context.Context, data ReqData, sspData SSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) (*Creative, string, error) {
+func Event(ctx context.Context, data ReqData, sspData SSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client, cache *ristretto.Cache) (*Creative, string, error) {
 
 	var creatives []Creative
 
@@ -220,8 +220,7 @@ func Event(ctx context.Context, data ReqData, sspData SSP, waitGroup *sync.WaitG
 
 			data.ID = data.SID
 
-
-			res := Affiliates[DSPData[idx].Name](ctx, data, cfg, waitGroup, mongoClient)
+			res := Affiliates[DSPData[idx].Name](ctx, data, cfg, waitGroup, mongoClient, cache)
 			creatives = append(creatives, res)
 		}
 	}
@@ -259,9 +258,7 @@ func Event(ctx context.Context, data ReqData, sspData SSP, waitGroup *sync.WaitG
 
 }
 
-func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) Creative {
-
-	rdb := redis.Client()
+func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client, cache *ristretto.Cache) Creative {
 
 	country := data.Country
 	sourceId := data.ID
@@ -278,11 +275,11 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 
 	var campaignsJson string
 
-	redisCampaigns := redis.Get(rdb, redisKey)
+	redisCampaigns, found := cache.Get(redisKey)
 
-	if redisCampaigns != "error" {
+	if found {
 
-		campaignsJson = redisCampaigns
+		campaignsJson = redisCampaigns.(string)
 
 	} else {
 
@@ -292,9 +289,9 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 
 			campaignsJson = postgresCampaigns
 
-			set := redis.Set(rdb, redisKey, campaignsJson)
+			set := cache.Set(redisKey, campaignsJson, 1)
 
-			if set == "error" {
+			if !set {
 				return Creative{
 					Status:  204,
 					DSPID:   cfg.DSPID,
@@ -315,9 +312,6 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 		}
 	}
 
-	conn := rdb.Get()
-	conn.Close()
-
 	var campaignsMap []map[string]interface{}
 	json.Unmarshal([]byte(campaignsJson), &campaignsMap)
 
@@ -335,7 +329,6 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 
 		json.Unmarshal([]byte(cfgCompany["blacklist_feed"].(string)), &blacklistFeed)
 		json.Unmarshal([]byte(cfgCompany["whitelist_feed"].(string)), &whitelistFeed)
-
 
 		if ts.Compatible(timestamp, cfgCompany["freshness"].(string)) &&
 			inArray.FindString(blacklist, sourceId) == false &&
@@ -411,8 +404,7 @@ func Get(ctx context.Context, data ReqData, cfg DataDSP, waitGroup *sync.WaitGro
 			DSPName:     cfg.DSPName,
 			SSPID:       cfg.SSPID,
 			SSPName:     cfg.SSPName,
-			SID:    sourceId,
-
+			SID:         sourceId,
 		}
 	} else {
 		return Creative{

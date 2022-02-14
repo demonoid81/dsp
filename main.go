@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/demonoid81/dsp/auction/dsp"
 	"github.com/demonoid81/dsp/auction/ssp"
@@ -14,25 +15,22 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"io/ioutil"
-	"sync"
-	"time"
-
-	//"os"
-	"encoding/json"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/demonoid81/dsp/config"
 	"github.com/demonoid81/dsp/events/encrypt"
 	"github.com/demonoid81/dsp/events/inArray"
 	"github.com/demonoid81/dsp/events/postgres"
-	"github.com/demonoid81/dsp/events/redis"
 	ts "github.com/demonoid81/dsp/events/timestamp"
 	"github.com/demonoid81/dsp/events/utils"
+	"github.com/dgraph-io/ristretto"
 	"github.com/google/uuid"
 	"github.com/rs/cors"
 )
@@ -40,6 +38,7 @@ import (
 type app struct {
 	SSP         []dsp.SSP
 	mongoClient *mongo.Client
+	Cache       *ristretto.Cache
 }
 
 type campany struct {
@@ -157,6 +156,16 @@ func main() {
 
 	App.mongoClient = mongoClient
 
+	App.Cache, err = ristretto.NewCache(&ristretto.Config{
+		NumCounters: 1e7,     // number of keys to track frequency of (10M).
+		MaxCost:     1 << 30, // maximum cost of cache (1GB).
+		BufferItems: 64,      // number of keys per Get buffer.
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -173,7 +182,7 @@ func main() {
 
 	router.Path("/prometheus").Handler(promhttp.Handler())
 
-	router.Path("/ssp").Handler(sspEvent(ctx, &waitGroup, mongoClient))
+	router.Path("/ssp").Handler(sspEvent(ctx, &waitGroup, mongoClient, App.Cache))
 
 	router.Path("/subscribe").Handler(subscribe(ctx))
 
@@ -181,7 +190,7 @@ func main() {
 
 	router.Path("/clickdsp").Handler(clickdsp(ctx))
 
-	router.Path("/feed").Handler(ssp.Feed(ctx, App.SSP, &waitGroup, mongoClient, totalRequestsByFeed, totalRequestsBySID))
+	router.Path("/feed").Handler(ssp.Feed(ctx, App.SSP, &waitGroup, mongoClient, totalRequestsByFeed, totalRequestsBySID, App.Cache))
 
 	router.Path("/stat").Handler(App.stat(ctx))
 
@@ -231,9 +240,9 @@ func (app *app) reloadSSP(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-func sspEvent(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client) http.HandlerFunc {
+func sspEvent(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client, cache *ristretto.Cache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rdb := redis.Client()
+
 
 		params, err := url.PathUnescape(r.URL.RawQuery)
 		if err != nil {
@@ -262,11 +271,11 @@ func sspEvent(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo
 		var redisKey = browser + "-" + platform + "-" + country + "-" + category + "-" + pushType + "-" + feedId
 		var campaignsJson string
 
-		redisCampaigns := redis.Get(rdb, redisKey)
+		redisCampaigns, found := cache.Get(redisKey)
 
-		if redisCampaigns != "error" {
+		if found {
 
-			campaignsJson = redisCampaigns
+			campaignsJson = redisCampaigns.(string)
 
 		} else {
 
@@ -276,9 +285,9 @@ func sspEvent(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo
 
 				campaignsJson = postgresCampaigns
 
-				set := redis.Set(rdb, redisKey, campaignsJson)
+				set := cache.Set(redisKey, campaignsJson, 1)
 
-				if set == "error" {
+				if !set {
 					w.WriteHeader(204)
 					return
 				}
@@ -289,8 +298,6 @@ func sspEvent(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo
 			}
 		}
 
-		conn := rdb.Get()
-		conn.Close()
 
 		var campaignsMap []map[string]interface{}
 		json.Unmarshal([]byte(campaignsJson), &campaignsMap)

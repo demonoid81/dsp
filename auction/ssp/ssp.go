@@ -10,6 +10,7 @@ import (
 	"github.com/demonoid81/dsp/config"
 	"github.com/demonoid81/dsp/events/encrypt"
 	"github.com/demonoid81/dsp/events/utils"
+	"github.com/dgraph-io/ristretto"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"math/rand"
@@ -24,7 +25,7 @@ func MD5(text string) string {
 	return hex.EncodeToString(algorithm.Sum(nil))
 }
 
-func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client, counter *prometheus.CounterVec, counterSID *prometheus.CounterVec) http.HandlerFunc {
+func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mongoClient *mongo.Client, counter *prometheus.CounterVec, counterSID *prometheus.CounterVec, cache *ristretto.Cache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -59,7 +60,7 @@ func Feed(ctx context.Context, SSPData []dsp.SSP, waitGroup *sync.WaitGroup, mon
 			Country: country,
 		}
 
-		creative, dataBase64, _ := dsp.Event(ctx, data, SSPData[idx], waitGroup, mongoClient)
+		creative, dataBase64, _ := dsp.Event(ctx, data, SSPData[idx], waitGroup, mongoClient, cache)
 		if creative.Status == 200 {
 
 			w.Header().Set("Token", dataBase64)
