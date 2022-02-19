@@ -69,6 +69,8 @@ export default {
   },
   mounted () {
     this.$store.dispatch('libs/getCountries')
+    this.$store.dispatch('libs/getOS')
+    this.$store.dispatch('libs/getBrowsers')
   }
 }
 </script>

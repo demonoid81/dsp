@@ -135,14 +135,29 @@
             <FormItem label="OS">
               <Select :value="campaign.target.os" multiple @on-change="changeCampaignCountry($event, index)" filterable
                       placeholder="Select campaign OS">
-                <Option v-for="item in getOS" :value="item.value" :key="item.value">{{ item.value }}</Option>
+                <Option v-for="item in os" :value="item" :key="item">{{ item }}</Option>
               </Select>
             </FormItem>
             <FormItem label="Browser">
-              <Select :value="campaign.target.browser" @on-change="changeCampaignCountry($event, index)" filterable
+              <Select :value="campaign.target.browser" multiple @on-change="changeCampaignCountry($event, index)" filterable
                       placeholder="Select campaign Browser">
-                <Option v-for="item in getBrowser" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                <Option v-for="item in browsers" :value="item" :key="item">{{ item }}</Option>
               </Select>
+            </FormItem>
+            <FormItem label="Свежесть подписки:">
+              <Form inline label-position="left" :label-width="80">
+                <FormItem label="c">
+                  <InputNumber :max="100" :min="0" v-model="value2"></InputNumber>
+                </FormItem>
+                <FormItem label="по:">
+                  <InputNumber :max="100" :min="0" v-model="value2"></InputNumber>
+                </FormItem>
+                <FormItem label="тип:" >
+                  <Select v-model="model1" style="width:200px">
+                    <Option v-for="item in time_range" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                  </Select>
+                </FormItem>
+              </Form>
             </FormItem>
           </Form>
         </template>
@@ -150,19 +165,133 @@
       <Panel>
         График проведения кампании
         <template slot="content">
+          <Row>
+            <Col flex="150px">
+              <Checkbox v-model="single">Все</Checkbox>
+            </Col>
+            <Col v-for="item in 24" key="item" flex="24px">
+              <div style="position: absolute;left: 30%;top: 50%;transform: translate(-50%, -50%);">
+                {{item}}
+              </div>
+            </Col>
+          </Row>
 
+          <Row>
+            <Col flex="150px">
+              <Checkbox v-model="single">Понедельник</Checkbox>
+            </Col>
+            <Col v-for="item in 24" key="vitem" flex="24px">
+              <Checkbox v-model="single"></Checkbox>
+            </Col>
+          </Row>
+          <Row>
+            <Col flex="150px">
+              <Checkbox v-model="single">Вторник</Checkbox>
+            </Col>
+            <Col v-for="item in 24" key="vitem" flex="24px">
+              <Checkbox v-model="single"></Checkbox>
+            </Col>
+          </Row>
+          <Row>
+            <Col flex="150px">
+              <Checkbox v-model="single">Среда</Checkbox>
+            </Col>
+            <Col v-for="item in 24" key="vitem" flex="24px">
+              <Checkbox v-model="single"></Checkbox>
+            </Col>
+          </Row>
+          <Row>
+            <Col flex="150px">
+              <Checkbox v-model="single">Четверг</Checkbox>
+            </Col>
+            <Col v-for="item in 24" key="vitem" flex="24px">
+              <Checkbox v-model="single"></Checkbox>
+            </Col>
+          </Row>
+          <Row>
+            <Col flex="150px">
+              <Checkbox v-model="single">Пятница</Checkbox>
+            </Col>
+            <Col v-for="item in 24" key="vitem" flex="24px">
+              <Checkbox v-model="single"></Checkbox>
+            </Col>
+          </Row>
+          <Row>
+            <Col flex="150px">
+              <Checkbox v-model="single">Суббота</Checkbox>
+            </Col>
+            <Col v-for="item in 24" key="vitem" flex="24px">
+              <Checkbox v-model="single"></Checkbox>
+            </Col>
+          </Row>
+          <Row>
+            <Col flex="150px">
+              <Checkbox v-model="single">Воскресенье</Checkbox>
+            </Col>
+            <Col v-for="item in 24" key="vitem" flex="24px">
+              <Checkbox v-model="single"></Checkbox>
+            </Col>
+          </Row>
+          <br/>
+          <Checkbox v-model="single">Настроить период просмотра</Checkbox>
+          <DatePicker type="date" :start-date="new Date(1991, 4, 14)" placeholder="Select date" style="width: 200px"></DatePicker>
+          <Checkbox v-model="single">Дата окончания отсутствует</Checkbox>
         </template>
       </Panel>
       <Panel>
         Ограничение рекламы
         <template slot="content">
-
+          <Row>
+            <Col span="8">
+              <p>Общая сумма бюджета, $:</p>
+              <InputNumber v-model="value2" placeholder="без ограничений" style="width:200px;"></InputNumber>
+            </Col>
+            <Col span="8">
+              <p>Ежедневный бюджет, $:</p>
+              <InputNumber v-model="value2" placeholder="без ограничений" style="width:200px;"></InputNumber>
+            </Col>
+          </Row>
+          <br/>
+          <Row>
+            <Col span="8">
+              <p>Общее ограничение количества переходов по ссылке:</p>
+              <InputNumber v-model="value2"  placeholder="без ограничений" style="width:200px;"></InputNumber>
+            </Col>
+            <Col span="8">
+              <p>Ежедневное ограничение количества переходов по ссылке:</p>
+              <InputNumber v-model="value2"  placeholder="без ограничений" style="width:200px;"></InputNumber>
+            </Col>
+          </Row>
         </template>
       </Panel>
       <Panel>
         Аудитория
         <template slot="content">
-
+          <Row :gutter="50">
+            <Col flex="200px">
+              <p>Тип (Source):</p>
+              <Select v-model="model1" style="width:200px">
+                <Option v-for="item in sourceAudience" :value="item.value" :key="item.value">{{ item.label }}</Option>
+              </Select>
+            </Col>
+            <Col flex="auto">
+              <p>Источники (Source):</p>
+              <Input v-model="value6" type="textarea" :rows="4" placeholder="Enter something..." />
+            </Col>
+          </Row>
+          <br/>
+          <Row :gutter="50">
+            <Col flex="200px">
+              <p>Тип (Feed):</p>
+              <Select v-model="model1" style="width:200px">
+                <Option v-for="item in feedAudience" :value="item.value" :key="item.value">{{ item.label }}</Option>
+              </Select>
+            </Col>
+            <Col flex="auto">
+              <p>Источники (Feed):</p>
+              <Input v-model="value6" type="textarea" :rows="4" placeholder="Enter something..." />
+            </Col>
+          </Row>
         </template>
       </Panel>
     </Collapse>
@@ -207,6 +336,44 @@ export default {
         freshness: "{FRESHNESS}",
         feed_id: "{FEED_ID}",
       },
+      daysOfWeek: [
+      "Понедельник",
+      "Вторник",
+      "Среда",
+      "Четверг",
+      "Пятница",
+      "Суббота",
+      "Воскресенье"],
+      feedAudience: [
+        {
+          value: "blacklist_feed",
+          label: "Blacklist",
+        },{
+          value: "whitelist_feed",
+          label:"Whitelist"
+        }],
+      sourceAudience: [
+        {
+          value: "blacklist",
+          label: "Blacklist",
+        },{
+          value: "whitelist",
+          label:"Whitelist"
+        }],
+      time_range: [
+        {
+          value: 'm',
+          label: 'Минуты'
+        },
+        {
+          value: 'h',
+          label: 'Часы'
+        },
+        {
+          value: 'd',
+          label: 'Дни'
+        },
+      ]
     }
   },
   methods: {
@@ -298,11 +465,12 @@ export default {
     ...mapGetters('libs', [
       'countries',
       'os',
-        'browser'
+      'browsers'
     ]),
     ...mapGetters('campaigns', [
       'campaign',
       'campaignCountries',
+
     ]),
     getCountries() {
       return this.countries.filter(({value: id1}) => !this.campaignCountries.some(({value: id2}) => id2 === id1));
@@ -324,6 +492,8 @@ export default {
     }
   },
   mounted() {
+    this.$store.dispatch('libs/getCountries')
+    this.$store.dispatch('libs/getOS')
     this.$store.dispatch('libs/getCountries')
   }
 }

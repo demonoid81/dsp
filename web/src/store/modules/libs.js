@@ -18,10 +18,10 @@ const mutations = {
         state.countries = countries
     },
     setOS (state, os) {
-        state.countries = countries
+        state.os = os
     },
-    setBrowsers (state, countries) {
-        state.countries = countries
+    setBrowsers (state, browsers) {
+        state.browsers = browsers
     },
 }
 
@@ -38,8 +38,8 @@ const actions = {
     },
     async getOS ({commit}) {
         try {
-            const { data } = await axios.get('/api/os');
-            commit('setCountries', data)
+            // const { data } = await axios.get('/api/os');
+            commit('setOS', ["Windows", "Windows Phone", "Android",  "macOS", "iOS", "Linux"])
             return true
         } catch(err) {
             console.log(err)
@@ -48,8 +48,8 @@ const actions = {
     },
     async getBrowsers ({commit}) {
         try {
-            const { data } = await axios.get('/api/browsers');
-            commit('setCountries', data)
+            // const { data } = await axios.get('/api/browsers');
+            commit('setBrowsers', ["Opera", "Opera Mini", "Opera Touch",  "Chrome", "Firefox", "Internet Explorer", "Safari", "Edge", "Vivaldi", "YaBrowser", "Arora", "AtomicBrowser", "Android browser"])
             return true
         } catch(err) {
             console.log(err)
