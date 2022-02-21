@@ -62,15 +62,6 @@ func (s *Server) addСampaign(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-func (s *Server) addCampaign(ctx context.Context) {
-	collection := s.mongo.MongoClient.Database(s.cfg.MongoDatabase).Collection("campaigns")
-	_, err := collection.InsertOne(ctx, campaigns)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-}
-
 func (s *Server) getCampaign(ctx context.Context) {
 	collection := s.mongo.MongoClient.Database(s.cfg.MongoDatabase).Collection("campaigns")
 	filter := bson.M{
