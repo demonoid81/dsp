@@ -7,11 +7,11 @@
 
     </CompanyModal>
     <div>
-      Кампании
       <Button size="small" style="margin-right: 5px" type="primary" @click="showModal = true">
-        Создать
+        Создать Кампанию
       </Button>
     </div>
+    <br/>
     <Table :columns="columns" :data="data" border no-data-text="No data">
       <template slot="action" slot-scope="{ row, index }">
         <Tooltip content="Edit" placement="bottom" theme="light">
@@ -55,9 +55,6 @@ export default {
         {title: 'Ограничение переходов по ссылке', key: 'limit_budget'},
         {title: 'Создано', key: 'created'},
         {title: 'Действия', slot: 'action', width: 150, align: 'center'}
-      ],
-      data: [
-        {id: 1,},
       ],
     }
   },

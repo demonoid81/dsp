@@ -2,8 +2,10 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
+	"net/http"
 )
 
 type СampaignType struct {
@@ -26,70 +28,39 @@ type Campaign struct {
 	OS                []string          `json:"os" bson:"os"`
 	URL               string            `json:"url" bson:"url"`
 	Type              СampaignType      `json:"type" bson:"type"`
-	AdIcon            string            `json:"ad_icon" bson:"ad_icon"`
-	AdText            string            `json:"ad_text" bson:"ad_text"`
+	Icon              string            `json:"icon" bson:"icon"`
+	Text              string            `json:"text" bson:"text"`
 	Browser           []string          `json:"browser" bson:"browsers"`
 	UserID            int               `json:"user_id" bson:"user_id"`
-	AdImage           string            `json:"ad_image" bson:"ad_image"`
-	AdTitle           string            `json:"ad_title" bson:"ad_title"`
+	Image             string            `json:"image" bson:"image"`
+	Title             string            `json:"title" bson:"title"`
 	Category          int               `json:"category" bson:"category"`
-	Blacklist         []string          `json:"blacklist" bson:"blacklist"`
 	CampaignCountries []CampaignCountry `json:"campaign_country" bson:"campaign_country"`
 	Freshness         CampaignFreshness `json:"freshness" bson:"freshness"`
 	Whitelist         []string          `json:"whitelist" bson:"whitelist"`
+	Blacklist         []string          `json:"blacklist" bson:"blacklist"`
 	BlacklistFeed     []int             `json:"blacklist_feed" bson:"blacklist_feed"`
 	WhitelistFeed     []int             `json:"whitelist_feed" bson:"whitelist_feed"`
 }
 
-var campaigns = Campaign{
-
-	ID:  161,
-	OS:  []string{"Windows"},
-	URL: "https://poreztaranom.xyz/click.php?key=bxvz5chbvddg7tobrdz9&b={COST}&s={SOURCE_ID}&c={CAMPAIGN_ID}&f={FRESHNESS}&fd={FEED_ID}",
-	Type: СampaignType{
-		InPage:  false,
-		Classic: true,
-	},
-	AdIcon:   "yq3KNC1otiXWXaJ.png",
-	AdText:   "Click here to clean",
-	Browser:  []string{},
-	UserID:   1261,
-	AdImage:  "eaqfaiw6EZDvmFs.png",
-	AdTitle:  "System is infected!",
-	Category: 1,
-	Blacklist: []string{
-		"102101neutral__w10_0608_wwcpa",
-		"102101terame_w10_3008_ch1_479567",
-		"102101sam_w10_2508_multich",
-		"102101agent_w10_0507_wwcpa",
-		"102101ramos_w10_0907_us_chrome_block",
-		"102101ramos_w10_0605_us_chrome",
-		"102101ramos_w10_1404_back_new",
-		"102101glx_w10_1606_phoenix5",
-		"102101medo_w10_0610_multich2",
-		"",
-	},
-	CampaignCountries: []CampaignCountry{
-		{Country: "US", CPC: 0.18},
-		{Country: "RU", CPC: 0.18},
-	},
-	Freshness:     CampaignFreshness{Type: "m", Duration: 60},
-	Whitelist:     []string{},
-	BlacklistFeed: []int{},
-	WhitelistFeed: []int{101},
+func (s *Server) addСampaign(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var campaign Campaign
+		err := json.NewDecoder(r.Body).Decode(&campaign)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		collection := s.mongo.MongoClient.Database(s.cfg.MongoDatabase).Collection("campaigns")
+		_, err = collection.InsertOne(ctx, campaign)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}
 }
-
-//func (s *Server) addСampaign(ctx context.Context) http.HandlerFunc {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		collection := s.mongo.MongoClient.Database(s.cfg.MongoDatabase).Collection("campaigns")
-//		_, err := collection.InsertOne(ctx, campaigns)
-//		if err != nil {
-//			http.Error(w, err.Error(), http.StatusBadRequest)
-//			return
-//		}
-//		w.WriteHeader(http.StatusOK)
-//	}
-//}
 
 func (s *Server) addCampaign(ctx context.Context) {
 	collection := s.mongo.MongoClient.Database(s.cfg.MongoDatabase).Collection("campaigns")

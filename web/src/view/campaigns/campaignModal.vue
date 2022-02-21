@@ -7,6 +7,7 @@
       <Icon type="ios-information-circle"></Icon>
       <span>Create compaing {{ campaignId }}</span>
     </p>
+    {{$store.state.campaigns}}
     <Form :model="campaign" :label-width="200" :rules="campaignValidate">
       <FormItem label="Name" prop="name">
         <Input v-model="campaignName" placeholder="Enter something..."></Input>
@@ -244,10 +245,10 @@
             </Col>
           </Row>
           <br/>
-<!--          <Checkbox v-model="single">Настроить период просмотра</Checkbox>-->
-<!--          <DatePicker type="date" :start-date="new Date(1991, 4, 14)" placeholder="Select date"-->
-<!--                      style="width: 200px"></DatePicker>-->
-<!--          <Checkbox v-model="single">Дата окончания отсутствует</Checkbox>-->
+          <!--          <Checkbox v-model="single">Настроить период просмотра</Checkbox>-->
+          <!--          <DatePicker type="date" :start-date="new Date(1991, 4, 14)" placeholder="Select date"-->
+          <!--                      style="width: 200px"></DatePicker>-->
+          <!--          <Checkbox v-model="single">Дата окончания отсутствует</Checkbox>-->
         </template>
       </Panel>
       <Panel>
@@ -256,22 +257,26 @@
           <Row>
             <Col span="8">
               <p>Общая сумма бюджета, $:</p>
-              <InputNumber v-model="campaignLimitsBudgetTotal" placeholder="без ограничений" style="width:200px;"></InputNumber>
+              <InputNumber v-model="campaignLimitsBudgetTotal" placeholder="без ограничений"
+                           style="width:200px;"></InputNumber>
             </Col>
             <Col span="8">
               <p>Ежедневный бюджет, $:</p>
-              <InputNumber v-model="campaignLimitsBudgetDaily" placeholder="без ограничений" style="width:200px;"></InputNumber>
+              <InputNumber v-model="campaignLimitsBudgetDaily" placeholder="без ограничений"
+                           style="width:200px;"></InputNumber>
             </Col>
           </Row>
           <br/>
           <Row>
             <Col span="8">
               <p>Общее ограничение количества переходов по ссылке:</p>
-              <InputNumber v-model="campaignLimitsClickTotal" placeholder="без ограничений" style="width:200px;"></InputNumber>
+              <InputNumber v-model="campaignLimitsClickTotal" placeholder="без ограничений"
+                           style="width:200px;"></InputNumber>
             </Col>
             <Col span="8">
               <p>Ежедневное ограничение количества переходов по ссылке:</p>
-              <InputNumber v-model="campaignLimitsClickTotal" placeholder="без ограничений" style="width:200px;"></InputNumber>
+              <InputNumber v-model="campaignLimitsClickTotal" placeholder="без ограничений"
+                           style="width:200px;"></InputNumber>
             </Col>
           </Row>
         </template>
@@ -301,7 +306,7 @@
             </Col>
             <Col flex="auto">
               <p>Источники (Feed):</p>
-              <Select v-model="feedAudienceValue" multiple>
+              <Select v-model="feedAudienceValue" multiple :disabled="(!campaign.blacklist_feed) && (!campaign.whitelist_feed)">
                 <Option v-for="item in dsp" :value="item.id" :key="item.id">{{ item.id + ' - ' + item.name }}</Option>
               </Select>
             </Col>
@@ -309,6 +314,8 @@
         </template>
       </Panel>
     </Collapse>
+    <br/>
+    <Checkbox :value="campaignActive">Запустить рекламную кампанию сразу после модерации</Checkbox>
   </Modal>
 </template>
 
@@ -317,7 +324,7 @@
 import parseUrl from 'qhttp/parse-url';
 import http_parse_query from 'qhttp/http_parse_query';
 import http_build_query from 'qhttp/http_build_query';
-import {mapGetters, mapMutations} from "vuex";
+import {mapActions, mapGetters, mapMutations} from "vuex";
 
 export default {
   name: "campaignModal",
@@ -372,7 +379,6 @@ export default {
           value: "whitelist_feed",
           label: "Whitelist"
         }],
-      newFeedAudienceValue: null,
       sourceAudience: [
         {
           value: "blacklist",
@@ -418,8 +424,16 @@ export default {
       'setCampaignItemField',
       'deleteCampaignItemField',
       'addFeedAudience',
+      'setLimitsBudgetTotal',
+      'setLimitsBudgetDaily',
+      'setLimitsClickTotal',
+      'setLimitsClickDaily',
+    ]),
+    ...mapActions('campaigns', [
+      'setCampaign'
     ]),
     saveEvent() {
+      this.setCampaign
       this.$emit('save')
     },
     closeEvent() {
@@ -563,21 +577,11 @@ export default {
       'campaigns',
       'campaign',
       'feedAudienceValue',
-        'sourceAudienceValue'
+      'sourceAudienceValue'
     ]),
     ...mapGetters('dsp', [
       'dsp',
     ]),
-    checkFeedAudienceType() {
-      console.log("change")
-      if (this.campaign.blacklist_feed) {
-        return false
-      }
-      if (this.campaign.whitelist_feed) {
-        return false
-      }
-      return true
-    },
     getCountries() {
       if (this.campaign.countries) {
         return this.countries.filter(({value: id1}) => !this.campaign.countries.some(({value: id2}) => id2 === id1));
@@ -675,7 +679,6 @@ export default {
         })
       }
     },
-
     campaignTargetOS: {
       get: function () {
         if (!this.campaign.target || !this.campaign.target.os) return []
@@ -691,52 +694,74 @@ export default {
 
     campaignFreshnessInterval1: {
       get: function () {
-        if (!this.campaign.target || !this.campaign.target.browsers) return []
-        return this.campaign.target.browsers
+        if (!this.campaign.freshness && !this.campaign.freshness.interval1) return null
+        return this.campaign.freshness.interval1
       },
-    },
+      set: function (value) {
 
+      }
+    },
     campaignFreshnessInterval2: {
       get: function () {
-        if (!this.campaign.target || !this.campaign.target.browsers) return []
-        return this.campaign.target.browsers
+        if (!this.campaign.freshness && !this.campaign.freshness.interval1) return null
+        return this.campaign.freshness.interval1
       },
+      set: function (value) {
+
+      }
+    },
+    campaignFreshnessType: {
+      get: function () {
+        if (!this.campaign.freshness && !this.campaign.freshness.type) return null
+        return this.campaign.freshness.type
+      },
+      set: function (value) {
+
+      }
     },
     campaignLimitsBudgetTotal: {
       get: function () {
-        if (this.campaign.limits && this.campaign.limits.budget && this.campaign.limits.budget.total) {
-          return this.campaign.limits.budget.total
+        if (this.campaign.limits && this.campaign.limits.budget_total) {
+          return this.campaign.limits.budget_total
         }
         return null
       },
-      set: function (value) {}
+      set: function (value) {
+        this.setLimitsBudgetTotal(value)
+      }
     },
     campaignLimitsBudgetDaily: {
       get: function () {
-        if (this.campaign.limits && this.campaign.limits.budget && this.campaign.limits.budget.daily) {
-          return this.campaign.limits.budget.daily
+        if (this.campaign.limits && this.campaign.limits.budget_daily) {
+          return this.campaign.limits.budget_daily
         }
         return null
       },
-      set: function (value) {}
+      set: function (value) {
+        this.setLimitsBudgetDaily(value)
+      }
     },
     campaignLimitsClickTotal: {
       get: function () {
-        if (this.campaign.limits && this.campaign.limits.click && this.campaign.limits.click.total) {
-          return this.campaign.limits.click.total
+        if (this.campaign.limits && this.campaign.limits.click_total) {
+          return this.campaign.limits.click_total
         }
         return null
       },
-      set: function (value) {}
+      set: function (value) {
+        this.setLimitsClickDaily(value)
+      }
     },
     campaignLimitsClickDaily: {
       get: function () {
-        if (this.campaign.limits && this.campaign.limits.click && this.campaign.limits.click.daily) {
-          return this.campaign.limits.click.daily
+        if (this.campaign.limits && this.campaign.limits.click_daily) {
+          return this.campaign.limits.click_daily
         }
         return null
       },
-      set: function (value) {}
+      set: function (value) {
+        this.setLimitsClickDaily(value)
+      }
     },
     sourceAudienceType: {
       get: function () {
@@ -766,6 +791,7 @@ export default {
             name: value
           })
         }
+        this.$forceUpdate()
       }
     },
     feedAudienceType: {
@@ -776,6 +802,7 @@ export default {
         if (this.campaign.whitelist_feed) {
           return 'whitelist_feed'
         }
+        return null
       },
       set: function (value) {
         if (this.campaign.blacklist_feed && value !== 'blacklist_feed') {
@@ -796,8 +823,37 @@ export default {
             name: value
           })
         }
+        this.$forceUpdate()
       }
     },
+    feedAudienceValue: {
+      get: function () {
+        if (this.campaign.blacklist_feed) {
+          return this.campaign.blacklist_feed
+        }
+        if (this.campaign.whitelist_feed) {
+          return this.campaign.whitelist_feed
+        }
+        return null
+      },
+      set: function (value) {
+        this.addFeedAudience(value)
+      }
+    },
+    campaignActive: {
+      get: function () {
+        if (this.campaign.active) {
+          return this.campaign.active
+        }
+        return false
+      },
+      set: function (value) {
+        this.setCampaignItemField({
+          value: value,
+          name: 'active'
+        })
+      }
+    }
   },
   mounted() {
     this.$store.dispatch('libs/getCountries')
@@ -805,14 +861,6 @@ export default {
     this.$store.dispatch('libs/getCountries')
     this.$store.dispatch('dsp/getDSP')
   },
-  watch: {
-    "$store..getters.campaigns.feedAudienceValue": {
-      deep: true,
-      handler: function(newVal, oldVa) {
-        console.log(newVal)
-      }
-    }
-  }
 }
 </script>
 

@@ -80,9 +80,106 @@ const mutations = {
     addFeedAudience(state, {name, value}) {
         state.campaign[name].push(value)
     },
+    setLimitsBudgetTotal(state, value) {
+        let limit = {
+            budget_total: value
+        }
+        if (state.campaign.limit) {
+            limit = {
+                ...state.campaign.limit,
+                budget_total: value
+            }
+        }
+        state.campaign = {
+            ...state.campaign,
+            limit
+        }
+    },
+    setLimitsBudgetDaily(state, value) {
+        let limit = {
+            budget_daily: value
+        }
+        if (state.campaign.limit) {
+            limit = {
+                ...state.campaign.limit,
+                budget_daily: value
+            }
+        }
+        state.campaign = {
+            ...state.campaign,
+            limit
+        }
+    },
+    setLimitsClickTotal(state, value) {
+        let limit = {
+            click_total: value
+        }
+        if (state.campaign.limit) {
+            limit = {
+                ...state.campaign.limit,
+                click_total: value
+            }
+        }
+        state.campaign = {
+            ...state.campaign,
+            limit
+        }
+    },
+    setLimitsClickDaily(state, value) {
+        let limit = {
+            click_daily: value
+        }
+        if (state.campaign.limit) {
+            limit = {
+                ...state.campaign.limit,
+                click_daily: value
+            }
+        }
+        state.campaign = {
+            ...state.campaign,
+            limit
+        }
+    },
+    setCampaigns (state, campaigns) {
+        state.campaigns = campaigns
+    },
+    addCampaign (state) {
+        let find = false
+        state.dsp = state.campaigns.map(item => {
+            if (item.id === state.campaign.id) {
+                find = true
+                return state.campaign
+            }
+            return item
+        })
+        if (!find) {
+            state.campaigns.push(state.campaign)
+        }
+    },
 }
 
-const actions = {}
+const actions = {
+    async setCampaign ({commit}) {
+        const err = await axios.post('/api/campaigns', state.dspItem).then(
+            () => {
+                commit('addCampaign')
+                return true
+            }).catch( err => {
+            console.log(err)
+            return false;
+        })
+    },
+    async getCampaigns ({commit}) {
+        try {
+            const { data } = await axios.get('/api/campaigns');
+            commit('setCampaigns', data)
+            return true
+        } catch(err) {
+            console.log(err)
+            return false;
+        }
+    },
+}
 
 export default {
     namespaced: true,
