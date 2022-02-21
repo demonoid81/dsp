@@ -1,36 +1,30 @@
 import axios from "axios";
 
 const state = {
-    campaign: {
-        name: '',
-        url: '',
-        type: [],
-        ad: {
-            icon: '',
-            image: '',
-            title: '',
-            text: '',
-        },
-        campaignCountries: [{
-            country: "US",
-            cpc: 0.001
-        }],
-        target: {
-            os: [],
-            browser: []
-        }
-    },
+    campaign: {},
+    campaigns: []
 }
 
 const getters = {
     campaign: state => state.campaign,
-    campaignCountries: state => {
-        return state.campaign.campaignCountries.map((item, index) => {
-            return {
-                ...item,
-                index: index
-            }
-        })
+    campaigns: state => state.campaigns,
+    feedAudienceValue: state => {
+        if (state.campaign.blacklist_feed) {
+            return state.campaign.blacklist_feed
+        }
+        if (state.campaign.whitelist_feed) {
+            return state.campaign.whitelist_feed
+        }
+        return []
+    },
+    sourceAudienceValue: state => {
+        if (state.campaign.blacklist) {
+            return state.campaign.blacklist
+        }
+        if (state.campaign.whitelist) {
+            return state.campaign.whitelist
+        }
+        return []
     }
 }
 
@@ -38,15 +32,14 @@ const mutations = {
     setCampaign(state, campaign) {
         state.campaign = campaign
     },
-    AddCampaignCountry(state) {
-        state.campaign.campaignCountries.push({
+    addCampaignCountry(state) {
+        state.campaign.countries.push({
             country: '',
             cpc: 0.0001
         })
     },
-    UpdateCampaignCountryItemCountry(state, {country, index}) {
-        state.campaign.campaignCountries = state.campaign.campaignCountries.
-        map((item, itemIndex) => {
+    updateCampaignCountryItemCountry(state, {country, index}) {
+        state.campaign.countries = state.campaign.countries.map((item, itemIndex) => {
             if (index === itemIndex) {
                 return {
                     ...item,
@@ -58,9 +51,8 @@ const mutations = {
             }
         })
     },
-    UpdateCampaignCountryItemCPC(state, {cpc, index}) {
-        state.campaign.campaignCountries = state.campaign.campaignCountries.
-        map((item, itemIndex) => {
+    updateCampaignCountryItemCPC(state, {cpc, index}) {
+        state.campaign.countries = state.campaign.countries.map((item, itemIndex) => {
             if (index === itemIndex) {
                 return {
                     ...item,
@@ -72,14 +64,22 @@ const mutations = {
             }
         })
     },
-    UpdateCampaignCountryItemRemove(state, index) {
-        if (state.campaign.campaignCountries.length === 1) {
-            state.campaign.campaignCountries = []
+    updateCampaignCountryItemRemove(state, index) {
+        if (state.campaign.countries.length === 1) {
+            state.campaign.countries = []
         } else {
-            state.campaign.campaignCountries = state.campaign.campaignCountries.slice(0, index).
-            concat(state.campaign.campaignCountries.slice(index + 1, state.campaign.campaignCountries.length))
+            state.campaign.countries = state.campaign.countries.slice(0, index).concat(state.campaign.countries.slice(index + 1, state.campaign.countries.length))
         }
-    }
+    },
+    setCampaignItemField(state, {value, name}) {
+        state.campaign[name] = value
+    },
+    deleteCampaignItemField(state, name) {
+        delete state.campaign[name]
+    },
+    addFeedAudience(state, {name, value}) {
+        state.campaign[name].push(value)
+    },
 }
 
 const actions = {}

@@ -33,7 +33,6 @@
       <template slot="footer">
         <br/>
       </template>
-
     </Table>
   </div>
 </template>

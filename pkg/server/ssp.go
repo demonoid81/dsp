@@ -10,15 +10,6 @@ import (
 	"net/http"
 )
 
-//import (
-//	"context"
-//	"encoding/json"
-//	"fmt"
-//	"github.com/demonoid81/dsp/auction/dsp"
-//	"go.mongodb.org/mongo-driver/bson"
-//	"go.mongodb.org/mongo-driver/mongo"
-//	"net/http"
-//)
 //
 //func (s *Server) loadSSP(ctx context.Context) error {
 //	var ssp []dsp.SSP

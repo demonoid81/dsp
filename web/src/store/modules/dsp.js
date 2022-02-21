@@ -38,7 +38,6 @@ const mutations = {
         state.dspItem = {}
     },
     setDSPItemField(state, {value, name}) {
-        console.log(value, name)
         state.dspItem[name] = value
     },
 }
