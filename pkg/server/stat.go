@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// Получение статистики
 func (s *Server) stat(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		startDate, err := time.Parse("2006-01-02", r.FormValue("start"))

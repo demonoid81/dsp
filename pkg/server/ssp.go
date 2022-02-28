@@ -80,6 +80,7 @@ func (s *Server) getSSP(ctx context.Context) http.HandlerFunc {
 	}
 }
 
+// Добавлении  SSP
 func (s *Server) addSSP(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var ssp dsp.SSP
@@ -99,6 +100,7 @@ func (s *Server) addSSP(ctx context.Context) http.HandlerFunc {
 	}
 }
 
+// Перегрузка при изменении задания
 func reload(ctx context.Context, client *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

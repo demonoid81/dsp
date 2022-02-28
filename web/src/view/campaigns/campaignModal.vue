@@ -166,7 +166,7 @@
                   <InputNumber :max="100" :min="0" v-model="campaignFreshnessInterval2"></InputNumber>
                 </FormItem>
                 <FormItem label="тип:">
-                  <Select v-model="model1" style="width:200px">
+                  <Select v-model="campaignFreshnessUnit" style="width:200px">
                     <Option v-for="item in time_range" :value="item.value" :key="item.value">{{ item.label }}</Option>
                   </Select>
                 </FormItem>
@@ -694,7 +694,7 @@ export default {
 
     campaignFreshnessInterval1: {
       get: function () {
-        if (!this.campaign.freshness && !this.campaign.freshness.interval1) return null
+        if (!this.campaign.freshness || !this.campaign.freshness.interval1) return null
         return this.campaign.freshness.interval1
       },
       set: function (value) {
@@ -703,17 +703,17 @@ export default {
     },
     campaignFreshnessInterval2: {
       get: function () {
-        if (!this.campaign.freshness && !this.campaign.freshness.interval1) return null
-        return this.campaign.freshness.interval1
+        if (!this.campaign.freshness || !this.campaign.freshness.interval2) return null
+        return this.campaign.freshness.interval2
       },
       set: function (value) {
 
       }
     },
-    campaignFreshnessType: {
+    campaignFreshnessUnit: {
       get: function () {
-        if (!this.campaign.freshness && !this.campaign.freshness.type) return null
-        return this.campaign.freshness.type
+        if (!this.campaign.freshness || !this.campaign.freshness.unit) return null
+        return this.campaign.freshness.unit
       },
       set: function (value) {
 
