@@ -27,7 +27,7 @@
       </FormItem>
     </Form>
     <div slot="footer">
-      <Button type="primary" @click="saveEvent">Save</Button>
+      <Button type="warning" @click="saveEvent">Save</Button>
       <Button type="primary" @click="closeEvent">Close</Button>
     </div>
   </Modal>

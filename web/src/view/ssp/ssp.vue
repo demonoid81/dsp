@@ -5,7 +5,7 @@
               :show="viewSSPModal"
               @close="viewSSPModal = false"
               @addDSS="addDSP"
-              @save="saveSSP"
+              @save="viewSSPModal = false"
     />
         <Button type="primary" @click="addSSPShow">Add SSP</Button>
 
@@ -13,8 +13,8 @@
       <p style="padding:10px;">SSP</p>
       <Table :columns="columnsSSP" :data="ssp" border no-data-text="No data">
         <template slot="action" slot-scope="{ row, index }">
-          <Button size="small" style="margin-right: 5px" type="primary" @click="show(index)">View</Button>
-          <Button size="small" type="error" @click="remove(index)">Delete</Button>
+          <Button size="small" style="margin-right: 5px" type="primary" @click="show(index)">Edit</Button>
+          <Button size="small" type="error" @click="remove(row.ssp_id)">Delete</Button>
         </template>
       </Table>
     </div>
@@ -27,7 +27,7 @@
 import axios from 'axios';
 
 import ModalSSP from "./ModalSSP";
-import {mapGetters, mapMutations} from "vuex";
+import {mapActions, mapGetters, mapMutations} from "vuex";
 
 export default {
   components: { ModalSSP},
@@ -73,16 +73,11 @@ export default {
     ...mapMutations('ssp', [
         'setSSPItem'
     ]),
+    ...mapActions('ssp',[
+      'deleteSSP'
+    ]),
     addSSPShow() {
       this.viewSSPModal = true
-      this.readOnly = false
-    },
-    saveSSP() {
-      axios.post(window.location.origin + 'api/ssp/add', this.dspItem)
-          .then()
-          .catch(error => {
-            console.error("There was an error!", error);
-          });
     },
     addDSP() {
       if (this.sspItem.hasOwnProperty('dss')) {
@@ -99,6 +94,9 @@ export default {
       this.readOnly = true
       this.viewSSPModal = true
     },
+    remove(id) {
+      this.deleteSSP(id)
+    }
   },
   computed: {
     ...mapGetters('ssp', [

@@ -129,11 +129,11 @@ func HTTPServer(app *app.Env) {
 	//
 	apiRouter.Path("/stat").Handler(server.stat(ctx))
 	//
+
 	apiRouter.Path("/ssp").Methods("GET").Handler(server.getSSP(ctx))
-	//
-	apiRouter.Path("/ssp/add").Handler(server.addSSP(ctx))
-	//router.Path("/ssp/update").Handler(server.addSSP(ctx, mongoClient))
-	//router.Path("/ssp/reload").Handler(App.reloadSSP(ctx))
+	apiRouter.Path("/ssp").Methods("POST").Handler(server.addSSP(ctx))
+	apiRouter.Path("/ssp").Methods("DELETE").Handler(server.deleteSSP(ctx))
+	apiRouter.Path("/ssp").Methods("PATCH").Handler(server.reloadSSP(ctx))
 	//
 	apiRouter.Path("/dsp").Methods("GET").Handler(server.getDSP(ctx))
 	apiRouter.Path("/dsp").Methods("POST").Handler(server.addDSP(ctx))

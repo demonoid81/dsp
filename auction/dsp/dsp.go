@@ -106,10 +106,11 @@ var Creatives []Creative
 
 type DSP struct {
 	ID                int `json:"id"`
-	Profit            float64
+	Profit            float64 `json:"profit"`
 	SourceIdBlacklist []string `json:"source_id_blacklist"`
 	CountryBlacklist  []string `json:"country_blacklist"`
 	CountryWhitelist  []string `json:"country_whitelist"`
+	Enabled bool `json:"enabled"`
 }
 
 type SSP struct {

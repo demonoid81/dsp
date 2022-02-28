@@ -5,6 +5,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
+	"strconv"
 )
 
 //
@@ -95,17 +96,20 @@ func (s *Server) deleteDSP(ctx context.Context) http.HandlerFunc {
 		id := r.FormValue("id")
 
 		fmt.Println(id)
-
-		collection := s.mongo.MongoClient.Database(s.cfg.MongoDatabase).Collection("dsp")
-
-		query := bson.M{"id": bson.M{"$eq": id}}
-
-		result, err := collection.DeleteOne(ctx, query)
+		i, err := strconv.Atoi(id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		fmt.Println(result)
+
+		collection := s.mongo.MongoClient.Database(s.cfg.MongoDatabase).Collection("dsp")
+
+		result, err := collection.DeleteOne(ctx, bson.M{"id": bson.M{"$eq": i}})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		fmt.Printf("DeleteOne removed %v document(s)\n", result.DeletedCount)
 		w.WriteHeader(http.StatusOK)
 	}
 }
