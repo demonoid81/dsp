@@ -15,6 +15,7 @@ type LData struct {
 	Country string `json:"cou" bson:"country"`
 	Browser string `json:"bro" bson:"browser"`
 	Os      string `json:"os" bson:"os"`
+	Cid     string `json:"cid" bson:"cid"`
 	Sid     string `json:"sid" bson:"sid"`
 	Date    string `json:"date" bson:"date"`
 	FeedId  string `json:"feed_id" bson:"feed_id"`

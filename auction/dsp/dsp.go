@@ -27,12 +27,13 @@ type LData struct {
 	Country string  `json:"cou" bson:"country"`
 	Browser string  `json:"bro" bson:"browser"`
 	Os      string  `json:"os" bson:"os"`
+	Cid     string `json:"cid" bson:"cid"`
 	Sid     string  `json:"sid" bson:"sid"`
 	Date    string  `json:"date" bson:"date"`
 	FeedId  string  `json:"feed_id" bson:"feed_id"`
 	ReqFeed int64   `json:"req_feed" bson:"req_feed"`
 	Clicks  int64   `json:"clicks" bson:"clicks"`
-	CPC     float64 `json:"cpc" bson:"cpc"`
+	Rate     float64 `json:"rate" bson:"rate"`
 }
 
 type DSPCfg struct {
@@ -427,6 +428,7 @@ func AddReq(ctx context.Context, data LinkData, waitGroup *sync.WaitGroup, clien
 		"browser": bson.M{"$eq": data.Bro},
 		"os":      bson.M{"$eq": data.Os},
 		"sid":     bson.M{"$eq": data.Sid},
+		"cid":     bson.M{"$eq": data.Cid},
 	}
 	var ldata LData
 	if err := statCollection.FindOne(ctx, filter).Decode(&ldata); err != nil {
@@ -438,6 +440,7 @@ func AddReq(ctx context.Context, data LinkData, waitGroup *sync.WaitGroup, clien
 				Sid:     data.Sid,
 				Date:    data.Date,
 				FeedId:  data.FeedId,
+				Cid:     data.Cid,
 				ReqFeed: 1,
 				Clicks:  0,
 			}

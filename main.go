@@ -171,12 +171,13 @@ func main() {
 		return
 	}
 
-	go func() {
-		err = App.RebuldStat(ctx)
-		if err != nil {
-			fmt.Println(err)
-		return
-	}}()
+	//go func() {
+	//	err = App.RebuldStat(ctx)
+	//	if err != nil {
+	//		fmt.Println(err)
+	//		return
+	//	}
+	//}()
 
 	err = App.loadSSP(ctx)
 	if err != nil {
@@ -250,7 +251,6 @@ func (app *app) reloadSSP(ctx context.Context) http.HandlerFunc {
 func sspEvent(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Client, cache *ristretto.Cache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-
 		params, err := url.PathUnescape(r.URL.RawQuery)
 		if err != nil {
 			w.WriteHeader(204)
@@ -304,7 +304,6 @@ func sspEvent(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo
 				return
 			}
 		}
-
 
 		var campaignsMap []map[string]interface{}
 		json.Unmarshal([]byte(campaignsJson), &campaignsMap)
@@ -529,6 +528,8 @@ func click(ctx context.Context, waitGroup *sync.WaitGroup, mongoClient *mongo.Cl
 				Sid:     data["sid"].(string),
 				Date:    data["date"].(string),
 				FeedId:  data["feed_id"].(string),
+				Cid:     data["cid"].(string),
+				Rate:     data["cpc"].(float64),
 			}
 
 			fmt.Println(ldata)
@@ -600,6 +601,7 @@ func addReq(ctx context.Context, data LinkData, waitGroup *sync.WaitGroup, clien
 				Browser: data.Bro,
 				Os:      data.Os,
 				Sid:     data.Sid,
+				Cid:     data.Cid,
 				Date:    data.Date,
 				FeedId:  data.FeedId,
 				ReqFeed: 1,
@@ -636,6 +638,7 @@ func updateReq(ctx context.Context, data LData, waitGroup *sync.WaitGroup, clien
 		"country": bson.M{"$eq": data.Country},
 		"browser": bson.M{"$eq": data.Browser},
 		"os":      bson.M{"$eq": data.Os},
+		"cid":     bson.M{"$eq": data.Cid},
 		"sid":     bson.M{"$eq": data.Sid},
 	}
 	var ldata LData
@@ -648,6 +651,7 @@ func updateReq(ctx context.Context, data LData, waitGroup *sync.WaitGroup, clien
 				Sid:     data.Sid,
 				Date:    data.Date,
 				FeedId:  data.FeedId,
+				Cid: data.Cid,
 				ReqFeed: 1,
 				Clicks:  1,
 			}
@@ -662,9 +666,11 @@ func updateReq(ctx context.Context, data LData, waitGroup *sync.WaitGroup, clien
 		}
 	}
 	ldata.Clicks = ldata.Clicks + 1
+	ldata.Rate = ldata.Rate + data.Rate
 	update := bson.M{
 		"$set": bson.M{
 			"clicks": ldata.Clicks,
+			"rate": ldata.Rate,
 		},
 	}
 	result, err := statCollection.UpdateOne(ctx, filter, update)
