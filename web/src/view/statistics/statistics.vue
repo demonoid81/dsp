@@ -14,8 +14,8 @@
       <Radio label="country">
         <span>Country</span>
       </Radio>
-      <Radio label="compaing">
-        <span>Compaing</span>
+      <Radio label="cid">
+        <span>Campaing</span>
       </Radio>
       <Radio label="os">
         <span>OS</span>
